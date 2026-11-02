@@ -2,7 +2,7 @@
 
 Saverr vergelijkt de prijzen van 10 Nederlandse supermarkten en laat je weten wanneer jouw favoriete producten goedkoper worden.
 
-**Open de app:** https://rickosas.github.io/saverr/
+**Open de app:** https://rickosas.github.io/Saverr/
 
 ## Installeren op je telefoon
 
