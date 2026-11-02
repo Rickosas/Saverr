@@ -1,0 +1,40 @@
+name: Prijzen bijwerken
+
+# Elke ochtend de nieuwste prijzen van Checkjebon ophalen en de app-data opnieuw bouwen.
+on:
+  schedule:
+    - cron: '17 7 * * *'   # 07:17 UTC (08:17 / 09:17 Nederlandse tijd)
+  workflow_dispatch:        # handmatig starten kan via het tabblad Actions
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkjebon-data ophalen (met 5 weken geschiedenis)
+        run: |
+          SINCE=$(date -d '35 days ago' +%Y-%m-%d)
+          git clone --filter=blob:none --no-checkout --shallow-since="$SINCE" https://github.com/supermarkt/checkjebon.git /tmp/checkjebon
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: App-data bouwen
+        run: python3 scripts/build_data.py /tmp/checkjebon
+
+      - name: Opslaan als er iets veranderd is
+        run: |
+          git config user.name "saverr-bot"
+          git config user.email "saverr-bot@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "Geen nieuwe prijzen."
+          else
+            git commit -m "Prijzen bijgewerkt $(date +%Y-%m-%d)"
+            git push
+          fi
