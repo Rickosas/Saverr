@@ -1,13 +1,16 @@
-import json, gzip, requests
-c = json.load(gzip.open('data/catalog.json.gz', 'rt'))
-AH = lambda x: f'https://static.ah.nl/dam/product/{x}?revLabel=1&rendition=200x200_JPG&fileType=binary'
-seen = {}
-for r in c['rows']:
-    s = c['stores'][r[0]]
-    if r[7] and seen.get(s, 0) < 2:
-        url = AH(r[7]) if str(r[7]).startswith('AHI_') else (f"https://images.poiesz-supermarkten.nl/artikelen/{r[4].rstrip('/').split('/')[-1]}.png" if r[7] == 'P' else r[7])
-        try:
-            x = requests.get(url, timeout=20, headers={'user-agent': 'Mozilla/5.0 (iPhone)'})
-            print(s, x.status_code, x.headers.get('content-type'), len(x.content), url[:110])
-        except Exception as e: print(s, 'fout', e)
-        seen[s] = seen.get(s, 0) + 1
+import requests
+U={'user-agent':'Mozilla/5.0 (iPhone)'}
+tests = ['https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png',
+ 'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200',
+ 'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200&height=200&mode=pad&format=webp',
+ 'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200&converttowebp=1',
+ 'https://web-fileserver.dekamarkt.nl/artikelen/453136_2026-10-07_16-44-54-225_87f80539-ee57-4a7e-878b-ee487eb91000.png?width=200&converttowebp=1',
+ 'https://images.poiesz-supermarkten.nl/artikelen/589247.png?width=200&converttowebp=1',
+ 'https://images.poiesz-supermarkten.nl/artikelen/589247.png?width=200&mode=fill&converttowebp=1',
+ 'https://www.jumbo.com/dam-images/fit-in/180x180/Products/10102025_1760061700961_1760061708204_571377_BKR_04025.png',
+ 'https://www.lidl.nl/assets/gcpc18b1deabbcc4052992b1107cbe5d4eb.png?w=200',
+ 'https://static.ah.nl/dam/product/AHI_4354523130313834383537?revLabel=1&rendition=200x200_WEBP&fileType=binary']
+for u in tests:
+    try:
+        x = requests.get(u, timeout=20, headers=U); print(x.status_code, x.headers.get('content-type'), len(x.content), u[:120])
+    except Exception as e: print('fout', e, u[:80])
