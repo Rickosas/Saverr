@@ -55,7 +55,8 @@ const has = (p,sid) => p.st[sid]!=null;
 const price = (p,sid) => p.st[sid][0];
 const was = (p,sid) => p.st[sid][4] || 0;
 // aanbieding: [label, min. aantal, prijs per stuk bij dat aantal, geldig t/m]
-const promo = (p,sid) => (p.st[sid] && p.st[sid][5]) || null;
+const okPromo = pr => pr && !(st.lidlPlus===false && /^Lidl Plus/.test(pr[0])) ? pr : null;   // Lidl Plus-prijzen alleen als je de app hebt
+const promo = (p,sid) => okPromo(p.st[sid] && p.st[sid][5]);
 const unitEff = (p,sid) => { const pr=promo(p,sid); return pr ? pr[2] : price(p,sid); };   // beste prijs per stuk
 const regOf = (p,sid) => Math.max(price(p,sid), was(p,sid));                                   // 'normale' prijs bij die winkel
 /* wat kost n stuks, rekening houdend met 1+1 gratis, 2 voor €x, enz. */
@@ -74,7 +75,8 @@ const cheapest = p => Object.entries(p.st).sort((a,b)=>unitEff(p,a[0])-unitEff(p
 const pDeals = p => Object.keys(p.st).filter(sid=>was(p,sid)||promo(p,sid))
   .map(sid=>({sid,price:unitEff(p,sid),was:regOf(p,sid),label:promo(p,sid)?promo(p,sid)[0]:'Prijsdaling',promo:promo(p,sid)})).sort((a,b)=>a.price-b.price);
 // catalogusregel: deal-info
-const rowPromo = r => r[6] || null;
+const rowPromo = r => okPromo(r[6]);
+const liveDrops = () => DROPS.filter(r=>rowPromo(r)||r[5]);   // zonder Lidl Plus-deals als je die app niet hebt
 const rowNow = r => rowPromo(r) ? rowPromo(r)[2] : r[2];
 const rowWas = r => rowPromo(r) ? Math.max(r[2], r[5]||0) : r[5];
 // catalogusregel: [winkelIndex, naam, prijs, verpakking, link, oudePrijs]
@@ -197,7 +199,7 @@ const isStandalone = () => matchMedia('(display-mode: standalone)').matches || n
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 /* ================= views ================= */
-const SRC = () => `<div class="srcnote">💶 Prijzen van ${STORES.length} supermarkten via <a href="https://www.checkjebon.nl" target="_blank" rel="noopener">Checkjebon.nl</a> (stand ${fmtDate(META.updated)}). 🏷️ Aanbiedingen: AH-bonus en Jumbo-acties${META.promos_updated?' van '+fmtDate(META.promos_updated):''}, plus prijsdalingen. Alles wordt elke ochtend bijgewerkt.</div>`;
+const SRC = () => `<div class="srcnote">💶 Prijzen van ${STORES.length} supermarkten via <a href="https://www.checkjebon.nl" target="_blank" rel="noopener">Checkjebon.nl</a> (stand ${fmtDate(META.updated)}). 🏷️ Aanbiedingen: AH-bonus, Jumbo, Dirk en Lidl${META.promos_updated?' van '+fmtDate(META.promos_updated):''}, plus prijsdalingen. Alles wordt elke ochtend bijgewerkt.</div>`;
 
 function itemHTML(p){
   const [sid]=cheapest(p), d=pDeals(p), t=st.targets[p.id], now=unitEff(p,sid), reg=regOf(p,sid);
@@ -217,7 +219,7 @@ function rowHTML(r,src){
 const SIM_NONE = '';
 
 function dealOfDay(){
-  const pool = DROPS.filter(r=>rowNow(r)>=0.5 && (rowPromo(r)?rowPromo(r)[1]===1:true)).slice(0,25); if(!pool.length) return null;
+  const pool = liveDrops().filter(r=>rowNow(r)>=0.5 && (rowPromo(r)?rowPromo(r)[1]===1:true)).slice(0,25); if(!pool.length) return null;
   const day = Math.floor(Date.now()/864e5); return pool[day % pool.length];
 }
 function bestFavDeal(){
@@ -232,7 +234,7 @@ function viewHome(){
   const hist=weeks.map(w=>({w:+w.split('W')[1],v:sumSaved(buysWeek(w)),cur:w===WEEK})), max=Math.max(...hist.map(h=>h.v),1);
   const month=sumSaved(st.purchases.filter(x=>x.date.startsWith(monthKey))), total=sumSaved(st.purchases);
   const dd=dealOfDay(), bd=bestFavDeal(), chs=challenges().filter(c=>!c.claimed).slice(0,2);
-  const mine = DROPS.filter(r=>st.myStores.includes(rowStore(r,DROPS_SRC))).slice(0,5);
+  const mine = liveDrops().filter(r=>st.myStores.includes(rowStore(r,DROPS_SRC))).slice(0,5);
   return `${installBanner()}
     <p class="hello">${['Goedenacht','Goedemorgen','Goedemiddag','Goedenavond'][Math.floor(today.getHours()/6)]}! Zo staat je spaarpot ervoor 👇</p>
     <button class="aicta" data-sub="planner"><span class="i">🤖</span><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je weekmenu':'Maak een weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
@@ -270,9 +272,9 @@ function viewBrowse(){
   const seg=`<div class="seg"><button class="${bmode==='cmp'?'on':''}" data-bmode="cmp">⚖️ Vergeleken</button><button class="${bmode==='drops'?'on':''}" data-bmode="drops">🔥 Aanbiedingen</button><button class="${bmode==='all'?'on':''}" data-bmode="all">🗂️ Alles</button></div>`;
   if(bmode==='all') return seg+viewCatalog();
   if(bmode==='drops'){
-    let rows=DROPS.filter(r=>(dropFilter==='all'||st.myStores.includes(rowStore(r,DROPS_SRC))) && (!query||r[1].toLowerCase().includes(query)));
+    let rows=liveDrops().filter(r=>(dropFilter==='all'||st.myStores.includes(rowStore(r,DROPS_SRC))) && (!query||r[1].toLowerCase().includes(query)));
     return seg+`<div class="chips"><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">📍 Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>
-      <p class="hint">${rows.length} aanbiedingen: AH-bonus, Jumbo-acties en prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
+      <p class="hint">${rows.length} aanbiedingen: AH-bonus, acties van Jumbo, Dirk en Lidl, en prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
       <div class="list">${rows.slice(0,120).map(r=>rowHTML(r,DROPS_SRC)).join('')||'<div class="empty">Geen prijsdalingen gevonden.</div>'}</div>${SRC()}`;
   }
   const cats=['Alles','🔥 Aanbiedingen',...new Set(PRODUCTS.map(p=>p.cat))];
@@ -386,6 +388,8 @@ function viewSettings(){
   return `${backBtn}<h2>Instellingen</h2>
     <div class="row"><div class="st">Meldingen<em>${st.notif&&perm==='granted'?'Aan':'Uit'}${perm==='denied'?' · geblokkeerd in je telefoon-instellingen':''}</em></div>
       <button class="switch ${st.notif&&perm==='granted'?'on':''}" data-act="${st.notif?'notifoff':'notif'}" aria-label="Meldingen"></button></div>
+    <div class="row"><div class="st">Ik heb Lidl Plus<em>Toon Lidl Plus-prijzen als aanbieding</em></div>
+      <button class="switch ${st.lidlPlus!==false?'on':''}" data-act="lidlplus" aria-label="Lidl Plus"></button></div>
     <div class="tip"><span class="i">ℹ️</span><div>In deze beta check Saverr de prijzen <b>elke keer dat je de app opent</b>. Meldingen op de achtergrond (terwijl de app dicht is) komen in een volgende versie.</div></div>
     <h2>Over Saverr</h2>
     <div class="tip"><span class="i">💶</span><div>Prijzen komen uit de open data van <a href="https://www.checkjebon.nl" target="_blank" rel="noopener">Checkjebon.nl</a> en worden elke ochtend bijgewerkt. Laatste update: <b>${fmtDate(META.updated)}</b>. Kortingen in de winkel kunnen afwijken.</div></div>
@@ -455,7 +459,7 @@ function alarmBox(key, normal, t, name){
     <div class="meta" style="margin-top:8px">${t!=null?`Je krijgt een melding zodra ${esc(name)} ${euro(t)} of goedkoper is.`:'Stel een gewenste prijs in en krijg alleen een melding als die bereikt wordt.'}</div></div>`;
 }
 let sheetFn=null;
-function sheet(html){ $('#sheet').innerHTML=`<div class="grab"></div><button class="back" data-act="close" style="position:absolute;right:16px;top:10px;font-size:20px;color:var(--muted)" aria-label="Sluiten">✕</button>`+html; $('#sheet').classList.add('show'); $('#scrim').classList.add('show'); $('#sheet').scrollTop=0; }
+function sheet(html){ $('#toast').classList.remove('show'); $('#sheet').innerHTML=`<div class="grab"></div><button class="back" data-act="close" style="position:absolute;right:16px;top:10px;font-size:20px;color:var(--muted)" aria-label="Sluiten">✕</button>`+html; $('#sheet').classList.add('show'); $('#scrim').classList.add('show'); $('#sheet').scrollTop=0; }
 function closeSheet(){ $('#sheet').classList.remove('show'); $('#scrim').classList.remove('show'); sheetFn=null; render(); }
 function markSeen(fn){ alerts.filter(fn).forEach(a=>{ if(!st.seen.includes(a.key)) st.seen.push(a.key); }); save(); }
 
@@ -512,6 +516,7 @@ document.addEventListener('click', e=>{
     else if(a==='plan2list'){ const c=planCost(st.plan.ids,st.plan.sid,st.plan.persons); st.list=c.items.map(it=>(it.n>1?it.n+'x ':'')+it.p.name).join(', '); listShown=true; save(); go('list'); push('🛒 Je weekmenu staat op je boodschappenlijst.'); }
     else if(a==='share') shareWeek();
     else if(a==='notifoff'){ st.notif=false; save(); render(); }
+    else if(a==='lidlplus'){ st.lidlPlus = st.lidlPlus===false; save(); buildAlerts(); render(); }
     else if(a==='install' && deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{ deferredInstall=null; render(); }); }
     else if(a==='reset'){ if(x.dataset.sure){ localStorage.removeItem(KEY); location.reload(); } else { x.dataset.sure='1'; x.textContent='Zeker weten? Tik nogmaals om alles te wissen'; x.style.color='var(--deal)'; } }
     return;

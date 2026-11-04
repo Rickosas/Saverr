@@ -84,13 +84,8 @@ def promo_key(store, item):
     if store == 'jumbo': return 'jumbo|' + link.rstrip('/').rsplit('-', 1)[-1]
     if store == 'dirk': return 'dirk|' + link.rstrip('/').rsplit('/', 1)[-1]
     if store == 'lidl':
-        n = lidl_norm(item['n'])
-        if 'lidlname|' + n in PROMOS: return 'lidlname|' + n
-        # zonder merknaam (eerste woord) nog een keer proberen
-        n2 = n.split(' ', 1)[-1]
-        for k in ('lidlname|' + n2,):
-            if k in PROMOS and len(n2) >= 5: return k
-        return None
+        k = 'lidlname|' + lidl_norm(item['n'])   # alleen een exact gelijke productnaam
+        return k if k in PROMOS else None
     return None
 PROMO_STORES = ('ah', 'jumbo', 'dirk', 'lidl')
 
@@ -118,6 +113,8 @@ def promo_for(store, item):
     pr = PROMOS.get(k) if k else None
     if not pr or (pr.get('t') and pr['t'] < TODAY): return 0
     reg = item['p']
+    # controle: de normale prijs bij de bron moet ongeveer kloppen met onze prijs (anders is het een ander product/formaat)
+    if pr.get('reg') and abs(reg - pr['reg']) > 0.2 * pr['reg']: return 0
     mod = (1, pr['unit']) if pr.get('unit') else promo_model(pr['l'], reg, pr.get('now'))
     if not mod: return 0
     mn, unit = mod
