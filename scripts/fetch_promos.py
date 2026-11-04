@@ -32,27 +32,29 @@ def fetch_ah():
     H = {'x-application': 'AHWEBSHOP', 'user-agent': 'Appie/8.22.3 Model/phone Android/13', 'content-type': 'application/json; charset=UTF-8'}
     tok = requests.post('https://api.ah.nl/mobile-auth/v1/auth/token/anonymous', headers=H, json={'clientId': 'appie'}, timeout=20).json()['access_token']
     H['Authorization'] = 'Bearer ' + tok
-    # zoektermen: de namen van de producten die Saverr vergelijkt, plus wat brede termen
-    terms = sorted({re.sub(r'\s*[\d,±]+.*$|\(.*?\)', '', sp[1]).strip() for sp in SPECS} |
-                   {'kaas', 'koffie', 'bier', 'frisdrank', 'chips', 'chocolade', 'yoghurt', 'vlees', 'kip', 'groente', 'fruit', 'brood',
-                    'pasta', 'wasmiddel', 'toiletpapier', 'shampoo', 'koekjes', 'ijs', 'pizza', 'sap', 'thee', 'snoep', 'vis', 'soep'})
-    n = 0
-    for q in terms:
-        if not q: continue
-        try:
-            r = requests.get('https://api.ah.nl/mobile-services/product/search/v2',
-                             params={'query': q, 'size': 60, 'page': 0, 'sortOn': 'RELEVANCE'}, headers=H, timeout=20)
-            r.raise_for_status()
-        except Exception as e:
-            print('AH zoeken mislukt:', q, e); continue
-        for p in r.json().get('products', []):
+    def add(products):
+        for p in products:
             mech = p.get('bonusMechanism')
             if not mech or not p.get('webshopId'): continue
-            end = p.get('bonusEndDate')
-            items[f"ah|wi{p['webshopId']}"] = dict(l=mech.strip(), t=end, now=p.get('currentPrice'), reg=p.get('priceBeforeBonus'),
-                                                   name=p.get('title'))
-            n += 1
-        time.sleep(0.4)
+            items[f"ah|wi{p['webshopId']}"] = dict(l=mech.strip(), t=p.get('bonusEndDate'), now=p.get('currentPrice'),
+                                                   reg=p.get('priceBeforeBonus'), name=p.get('title'))
+    def search(params):
+        r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params=params, headers=H, timeout=30)
+        r.raise_for_status(); return r.json()
+    # het hele assortiment per categorie doorlopen, alleen bonusproducten (bonus=true) → de complete bonuslijst
+    cats = requests.get('https://api.ah.nl/mobile-services/v1/product-shelves/categories', headers=H, timeout=30).json()
+    for c in cats:
+        page = 0
+        while True:
+            try:
+                j = search({'taxonomyId': c['id'], 'bonus': 'true', 'size': 750, 'page': page, 'sortOn': 'RELEVANCE'})
+            except Exception as e:
+                print('AH categorie mislukt:', c.get('name'), e); break
+            add(j.get('products', []))
+            page += 1
+            if page >= (j.get('page') or {}).get('totalPages', 1) or page > 20: break
+            time.sleep(0.3)
+        time.sleep(0.3)
     stats['ah'] = len([k for k in items if k.startswith('ah|')])
 
 # ------------------------------------------------------------------ Jumbo
