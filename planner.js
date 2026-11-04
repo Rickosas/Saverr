@@ -109,7 +109,7 @@ function planHTML(c,start){
       <div style="font-size:12.5px;opacity:.85">${over?`⚠️ ${euro(c.total-p.budget)} boven je budget van ${euro(p.budget)}. Probeer minder avonden of een hoger budget.`:`✓ Binnen je budget van ${euro(p.budget)} (${euro(p.budget-c.total)} over)`}</div></div>
     <button class="btn green" data-act="plan2list">🛒 Zet op mijn boodschappenlijst</button>
     <h2>Boodschappen (${c.items.length})</h2>
-    <div class="list">${c.items.map(it=>`<div class="item" data-open="${it.id}"><div class="emoji">${it.p.emoji}</div>
+    <div class="list">${c.items.map(it=>`<div class="item" data-open="${it.id}">${pic(productImg(it.p),it.p.emoji)}
       <div class="info"><div class="name">${it.n>1?it.n+'× ':''}${esc(it.p.name)}</div><div class="meta">${it.ok?esc(it.p.st[c.sid][1]):'Niet bij '+S(c.sid).name+' (geschat)'}</div>${it.promo?`<span class="deal-tag">🏷️ ${esc(it.promo[0])}</span>`:it.drop?`<span class="deal-tag">🔥 Prijsdaling</span>`:''}</div>
       <div class="price"><b>${euro(it.cost)}</b>${it.ok&&it.n*regOf(it.p,c.sid)>it.cost+0.005?`<s>${euro(it.n*regOf(it.p,c.sid))}</s>`:''}</div></div>`).join('')}</div>
     <p class="demo">Het totaal is voor hele verpakkingen; wat over blijft (zoals uien of ketjap) kun je later gebruiken. Zout, olie en kruiden heb je meestal al in huis. "Zonder slim kiezen" = hetzelfde menu bij de duurste van je gekozen winkels, zonder aanbiedingen. Aanbiedingen zoals 1+1 gratis zijn al meegerekend.</p>`;

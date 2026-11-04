@@ -21,6 +21,9 @@ UA_WEB = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/5
           'accept-language': 'nl-NL,nl;q=0.9'}
 items = {}
 stats = {}
+IMG = {}   # productfoto's per winkel: {winkel: {sleutel: url of AH-code}}
+def img(store, key, url):
+    if url: IMG.setdefault(store, {})[str(key)] = url
 
 def lidl_norm(s):
     s = re.sub(r'^[-\s]+', '', (s or '').lower())
@@ -36,6 +39,10 @@ def fetch_ah():
     horizon = (datetime.date.today() + datetime.timedelta(days=45)).isoformat()
     def add(products):
         for p in products:
+            # foto van elk AH-product bewaren (alleen de code, de rest van de URL is altijd hetzelfde)
+            for im in p.get('images') or []:
+                m = re.search(r'/product/(AHI_[^?]+)', im.get('url') or '')
+                if m: img('ah', f"wi{p.get('webshopId')}", m.group(1)); break
             mech = (p.get('bonusMechanism') or '').strip()
             end = p.get('bonusEndDate')
             # alleen echte (week)acties: geen permanente volumevoordelen of acties die "tot 2999" lopen
@@ -109,6 +116,9 @@ def fetch_jumbo():
         except Exception as e:
             print('Jumbo promo mislukt', pr['link'], e); continue
         ids = set(re.findall(r'href="/producten/[^"#?]*-(\d+[A-Z]+)"', t2))
+        for m in re.finditer(r'href="/producten/[^"#?]*-(\d+[A-Z]+)"', t2):   # foto die bij de producttegel hoort
+            im = re.search(r'(https://www\.jumbo\.com/dam-images/[^"\s]+)', t2[m.end():m.end() + 2500])
+            if im and m.group(1) not in IMG.get('jumbo', {}): img('jumbo', m.group(1), im.group(1).replace('&amp;', '&'))
         for pid in ids:
             items[f'jumbo|{pid}'] = dict(l=pr['l'], t=pr['t'], name=pr['title'])
         time.sleep(0.6)
@@ -167,8 +177,11 @@ def fetch_detailresult(store, url):
                 items[f"{store}|{pr['productId']}"] = dict(l=label, t=end, unit=price, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
             else:
                 continue
+            pim = (pr.get('productInformation') or {}).get('image')
+            if pim: img(store, pr['productId'], f'https://web-fileserver.{"dirk" if store == "dirk" else "dekamarkt"}.nl/' + pim)
             # ook op productnaam opslaan (DekaMarkt gebruikt op de site andere nummers dan in de prijsdata)
             nm = ((pr.get('productInformation') or {}).get('headerText') or '')
+            if nm and pim: img(store + 'name', lidl_norm(nm), f'https://web-fileserver.{"dirk" if store == "dirk" else "dekamarkt"}.nl/' + pim)
             if nm: items[f"{store}name|{lidl_norm(nm)}"] = items[f"{store}|{pr['productId']}"]
             n += 1
     stats[store] = n
@@ -223,7 +236,8 @@ def fetch_aldi():
             until = ((v.get('promotionPrices') or [{}])[0]).get('validUntilLocalDate')
             nm = ((v.get('brandName') or '').title() + ' ' + (v.get('name') or '')).strip()
             ALDI.append([nm, round(price, 2), round(strike, 2), v.get('salesUnit') or '', (v.get('productSlug') or '') + '.html',
-                         lab if lab and lab not in ('OP=OP', 'NU VOOR', 'VANAF') else f'-{round((1 - price / strike) * 100)}%', until])
+                         lab if lab and lab not in ('OP=OP', 'NU VOOR', 'VANAF') else f'-{round((1 - price / strike) * 100)}%', until,
+                         ((v.get('assets') or [{}])[0].get('url') or '')])
     stats['aldi'] = len(ALDI)
 
 # ------------------------------------------------------------------ Lidl
@@ -249,6 +263,8 @@ def fetch_lidl():
         else:
             continue
         if end.startswith('2200'): end = None
+        il = j.get('imageList_V1') or []
+        if il: img('lidlname', lidl_norm(title), il[0].get('image'))
         items[f'lidlname|{lidl_norm(title)}'] = dict(l=label, t=end or None, unit=unit, reg=old or price, name=title)
         n += 1
     stats['lidl'] = n
@@ -263,6 +279,17 @@ for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo), ('Dirk', fe
 if not items:
     print('Geen aanbiedingen opgehaald; vorig bestand blijft staan.')
     sys.exit(0)
+# foto's bewaren (samengevoegd met eerdere dagen, zodat we ze niet elke dag opnieuw nodig hebben)
+IMG_OUT = os.path.join(os.path.dirname(__file__), '..', 'data', 'images.json')
+try:
+    old = json.load(open(IMG_OUT, encoding='utf-8'))
+except Exception:
+    old = {}
+for st_, m in IMG.items():
+    old.setdefault(st_, {}).update(m)
+with open(IMG_OUT, 'w', encoding='utf-8') as f:
+    json.dump(old, f, ensure_ascii=False, separators=(',', ':'))
+stats['fotos'] = {k: len(v) for k, v in old.items()}
 with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(dict(updated=datetime.date.today().isoformat(), stats=stats, items=items, aldi=ALDI), f, ensure_ascii=False, separators=(',', ':'))
 print('Aanbiedingen opgehaald:', stats)

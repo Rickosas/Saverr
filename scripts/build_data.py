@@ -73,6 +73,21 @@ if os.path.exists(_pf):
     if _p.get('updated', '') >= (datetime.date.today() - datetime.timedelta(days=8)).isoformat():
         PROMOS, ALDI_OFFERS = _p['items'], _p.get('aldi', [])
 TODAY = datetime.date.today().isoformat()
+try:
+    IMAGES = json.load(open(os.path.join(OUT, 'images.json'), encoding='utf-8'))
+except Exception:
+    IMAGES = {}
+
+def image_for(store, item):
+    """Foto-URL (of AH-code 'AHI_…') voor een product, of '' als we er geen hebben."""
+    link = item['l']
+    if store == 'ah': return IMAGES.get('ah', {}).get(link.split('/')[0], '')
+    if store == 'jumbo': return IMAGES.get('jumbo', {}).get(link.rstrip('/').rsplit('-', 1)[-1], '')
+    if store in ('dirk', 'dekamarkt'):
+        return IMAGES.get(store, {}).get(link.rstrip('/').rsplit('/', 1)[-1]) or IMAGES.get(store + 'name', {}).get(lidl_norm(item['n']), '')
+    if store == 'lidl': return IMAGES.get('lidlname', {}).get(lidl_norm(item['n']), '')
+    if store == 'poiesz': return 'P'   # app maakt de URL zelf op basis van het productnummer
+    return ''
 
 def lidl_norm(s):
     s = re.sub(r'^[-\s]+', '', (s or '').lower())
@@ -203,14 +218,18 @@ for sp in SPECS:
     if pid in DROP: continue
     e = EXTRA.get(pid, {})
     spec = dict(inc=sp[4], exc=sp[5], kind=e.get('kind', sp[6]), lo=sp[7], hi=sp[8], ban=e.get('ban', []))
-    st = {}
+    st, pics = {}, {}
     for s in STORES:
         if s not in current or s in e.get('skip', []): continue
         b = best_match(spec, s)
         if b:
             st[s] = [round(b['p'], 2), b['n'], b.get('s') or '', current[s]['u'] + b['l'], was_price(s, b), promo_for(s, b)]
+            im = image_for(s, b)
+            if im and im != 'P' and 'img' not in pics: pics['img'] = (s, im)
     if len(st) >= 3:
-        products.append(dict(id=pid, name=NAMES.get(pid, sp[1]), emoji=sp[2], cat=sp[3], st=st))
+        img_ = pics.get('img')
+        if not img_ and 'poiesz' in st: img_ = ('poiesz', st['poiesz'][3].rstrip('/').rsplit('/', 1)[-1])
+        products.append(dict(id=pid, name=NAMES.get(pid, sp[1]), emoji=sp[2], cat=sp[3], st=st, img=list(img_) if img_ else 0))
 
 # ---------------------------------------------------------------- catalogus + dalingen
 stores_present = [s for s in STORES if s in current]
@@ -220,7 +239,7 @@ for i, s in enumerate(stores_present):
         if not it.get('p') or it['p'] < 0.2 or 'lidlmini' in it['n'].lower(): continue
         w = was_price(s, it)
         pr = promo_for(s, it) if s in PROMO_STORES else 0
-        row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w, pr]
+        row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w, pr, image_for(s, it)]
         rows.append(row)
         if w or pr: drops.append(row)
 # Aldi zit niet in de Checkjebon-data: de aanbiedingen voegen we als losse producten toe
@@ -230,8 +249,9 @@ if aldi_offers:
     ai = len(stores_present)
     stores_present.append('aldi')
     current['aldi'] = {'u': 'https://www.aldi.nl/product/', 'd': []}
-    for name, price, strike, unit, slug, lab, until in aldi_offers:
-        row = [ai, name, strike, unit, slug, 0, [lab, 1, price, until or '']]
+    for a in aldi_offers:
+        name, price, strike, unit, slug, lab, until = a[:7]
+        row = [ai, name, strike, unit, slug, 0, [lab, 1, price, until or ''], a[7] if len(a) > 7 else '']
         rows.append(row); drops.append(row)
 def deal_ratio(r):  # lager = betere deal
     return min(r[6][2] / r[2] if r[6] else 1, r[2] / r[5] if r[5] else 1)
