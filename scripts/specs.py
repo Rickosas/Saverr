@@ -10,7 +10,7 @@ SPECS=[
  ('vla','Vanillevla 1L','🍮','Zuivel',['vanille','vla'],['vlaflip','chocolade','ijs'],'ml',1000,1000),
  ('brood','Volkoren brood heel','🍞','Brood',['volkoren'],['beschuit','pan','afbak','mini','half','halfje','crackers','toast','stokbrood','pita','wraps','krenten','rogge'],'g',700,900),
  ('croissants','Croissants','🥐','Brood',['croissant'],['mini','chocolade','ham','kaas','deeg','ijs','vegan','spread'],'st',4,8),
- ('krentenbollen','Krentenbollen','🥯','Brood',['krentenbol|krentenbollen'],['mini','spelt'],'st',4,8),
+ ('krentenbollen','Krentenbollen','🍞','Brood',['krentenbol|krentenbollen'],['mini','spelt'],'st',4,8),
  ('beschuit','Beschuit','🍪','Brood',['beschuit'],['volkoren','muisjes','mini','glutenvrij','spelt','meergranen','rogge'],None,0,0),
  ('bananen','Bananen','🍌','Groente & fruit',['banan'],['tros','mini','chips','snackmix','kloppudding','pudding','chocola','gedroogd','smoothie','yoghurt','drink','brood','mini','baby','muesli','reep','knijp','vla','pancake','cake','splits'],None,0,0),
  ('appels','Elstar appels','🍎','Groente & fruit',['elstar'],['sap','moes','taart','chips','gedroogd'],None,0,0),

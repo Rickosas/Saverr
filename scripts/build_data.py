@@ -81,6 +81,8 @@ except Exception:
 def image_for(store, item):
     """Foto-URL (of AH-code 'AHI_…') voor een product, of '' als we er geen hebben."""
     link = item['l']
+    pg = IMAGES.get('url', {}).get(current[store]['u'] + link) if store in current else None
+    if pg and pg != '-': return pg            # foto van de eigen productpagina van deze winkel
     if store == 'ah': return IMAGES.get('ah', {}).get(link.split('/')[0], '')
     if store == 'jumbo': return IMAGES.get('jumbo', {}).get(link.rstrip('/').rsplit('-', 1)[-1], '')
     if store in ('dirk', 'dekamarkt'):
@@ -218,18 +220,15 @@ for sp in SPECS:
     if pid in DROP: continue
     e = EXTRA.get(pid, {})
     spec = dict(inc=sp[4], exc=sp[5], kind=e.get('kind', sp[6]), lo=sp[7], hi=sp[8], ban=e.get('ban', []))
-    st, pics = {}, {}
+    st = {}
     for s in STORES:
         if s not in current or s in e.get('skip', []): continue
         b = best_match(spec, s)
         if b:
-            st[s] = [round(b['p'], 2), b['n'], b.get('s') or '', current[s]['u'] + b['l'], was_price(s, b), promo_for(s, b)]
-            im = image_for(s, b)
-            if im and im != 'P' and 'img' not in pics: pics['img'] = (s, im)
+            # index 6 = foto van precies dít product bij déze winkel ('' als we er geen hebben)
+            st[s] = [round(b['p'], 2), b['n'], b.get('s') or '', current[s]['u'] + b['l'], was_price(s, b), promo_for(s, b), image_for(s, b)]
     if len(st) >= 3:
-        img_ = pics.get('img')
-        if not img_ and 'poiesz' in st: img_ = ('poiesz', st['poiesz'][3].rstrip('/').rsplit('/', 1)[-1])
-        products.append(dict(id=pid, name=NAMES.get(pid, sp[1]), emoji=sp[2], cat=sp[3], st=st, img=list(img_) if img_ else 0))
+        products.append(dict(id=pid, name=NAMES.get(pid, sp[1]), emoji=sp[2], cat=sp[3], st=st))
 
 # ---------------------------------------------------------------- catalogus + dalingen
 stores_present = [s for s in STORES if s in current]

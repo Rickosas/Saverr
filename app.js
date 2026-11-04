@@ -88,7 +88,10 @@ function imgSrc(sid, v, link){
   if(/web-fileserver\.(dirk|dekamarkt)\.nl/.test(v)) return v+'?width=200';   // kleine versie (origineel is soms 2 MB)
   return v;
 }
-const productImg = p => p.img ? imgSrc(p.img[0], p.img[1]) : '';
+// foto van het product bij één bepaalde winkel (nooit de foto van een andere winkel)
+const storeImg = (p,sid) => (p && p.st[sid] && p.st[sid][6]) ? imgSrc(sid, p.st[sid][6], p.st[sid][3]) : '';
+const badge = sid => '<span class="sb" style="background:'+S(sid).color+'">'+S(sid).short+'</span>';
+const picStore = (src, fallback, sid) => pic(src, fallback).replace(/<\/div>$/, badge(sid)+'</div>');
 const rowImg = (r,src) => imgSrc(rowStore(r,src), r[7], r[4]);
 /* plaatje met emoji als terugval als de foto niet laadt */
 const pic = (src, fallback, extra='') => `<div class="emoji pic" ${extra}>${fallback}${src?`<img src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`:''}</div>`;
@@ -220,7 +223,7 @@ const SRC = () => `<div class="srcnote">💶 Prijzen van ${STORES.length} superm
 
 function itemHTML(p){
   const [sid]=cheapest(p), d=pDeals(p), t=st.targets[p.id], now=unitEff(p,sid), reg=regOf(p,sid);
-  return `<div class="item" data-open="${p.id}">${pic(productImg(p),p.emoji)}
+  return `<div class="item" data-open="${p.id}">${picStore(storeImg(p,sid),p.emoji,sid)}
     <div class="info"><div class="name">${esc(p.name)}</div><div class="meta">Goedkoopst bij ${S(sid).name}</div>
       ${d.length?`<span class="deal-tag">🏷️ ${d.length===1?esc(d[0].label)+' bij '+S(d[0].sid).name:'Aanbieding bij '+d.length+' winkels'}</span> `:''}${t!=null?`<span class="alarm-tag">🔔 ≤ ${euro(t)}</span>`:''}</div>
     <div class="price"><b>${euro(now)}</b>${reg>now+0.005?`<s>${euro(reg)}</s>`:''}</div>
@@ -272,7 +275,7 @@ function viewHome(){
         <div style="font-size:13px;margin-top:2px">${S(sid).name}${rowPromo(dd)?' · '+esc(rowPromo(dd)[0])+untilTxt(rowPromo(dd)[3]):dd[3]?' · '+esc(dd[3]):''}</div></div></div>
       <button class="btn" data-row="${esc(sid)}|${esc(dd[4])}">Naar aanbieding →</button></div>`})():''}
     <h2>Beste deal op je favorieten</h2>
-    ${bd?`<div class="bestdeal" data-open="${bd.p.id}">${pic(productImg(bd.p),bd.p.emoji)}
+    ${bd?`<div class="bestdeal" data-open="${bd.p.id}">${picStore(storeImg(bd.p,bd.d.sid),bd.p.emoji,bd.d.sid)}
       <div class="info"><div class="k">⭐ Op jouw favoriet</div><div class="name">${esc(bd.p.name)}</div>
         <span class="store-pill" style="background:${S(bd.d.sid).color}">${S(bd.d.sid).name}</span> <span class="deal-tag">${esc(bd.d.label)}</span></div>
       <div class="pct">-${pct(bd.d.price,bd.d.was)}%<small>${euro(bd.d.price)} <s>${euro(bd.d.was)}</s></small></div></div>`
@@ -339,7 +342,7 @@ function viewList(){
         <div class="v">${euro(r.total)}</div></div>`).join('')}
       ${same.length>1?`<div class="verdict">Je bespaart <b>${euro(worst.total-win.total)}</b> door deze producten bij <b>${win.s.name}</b> te kopen.</div>`:''}
       <h2>Jouw lijstje bij ${win.s.name}</h2>
-      <div class="list">${found.map(f=>{const ok=has(f.p,win.s.id), pr=ok&&promo(f.p,win.s.id), cst=ok?costAt(f.p,win.s.id,f.qty):0, reg=ok?f.qty*regOf(f.p,win.s.id):0;return `<div class="item" data-open="${f.p.id}">${pic(productImg(f.p),f.p.emoji)}
+      <div class="list">${found.map(f=>{const ok=has(f.p,win.s.id), pr=ok&&promo(f.p,win.s.id), cst=ok?costAt(f.p,win.s.id,f.qty):0, reg=ok?f.qty*regOf(f.p,win.s.id):0;return `<div class="item" data-open="${f.p.id}">${ok?picStore(storeImg(f.p,win.s.id),f.p.emoji,win.s.id):pic('',f.p.emoji)}
         <div class="info"><div class="name">${f.qty>1?f.qty+'× ':''}${esc(f.p.name)}</div><div class="meta">${ok?esc(f.p.st[win.s.id][1]):'Niet gevonden bij '+win.s.name}</div>${pr?`<span class="deal-tag">🏷️ ${esc(pr[0])}${f.qty<pr[1]?' (koop er '+pr[1]+')':''}</span>`:ok&&was(f.p,win.s.id)?`<span class="deal-tag">🔥 Prijsdaling</span>`:''}</div>
         <div class="price"><b>${ok?euro(cst):'–'}</b>${ok&&reg>cst+0.005?`<s>${euro(reg)}</s>`:''}</div></div>`}).join('')}</div>`
     : found.length?'':'<div class="empty">Voeg producten toe om te vergelijken.</div>'}`;
@@ -348,7 +351,7 @@ function viewList(){
 function viewAlerts(){
   return `<h2>Meldingen</h2><p class="hint">Prijsdalingen en prijsalarmen op jouw favorieten.</p>
     ${!st.notif?`<div class="tip"><span class="i">🔔</span><div><b>Zet meldingen aan</b> om het direct te horen.<br><button class="btn sm green" data-act="notif" style="margin-top:8px">Meldingen aanzetten</button></div></div>`:''}
-    <div class="list">${alerts.map(a=>`<div class="alert ${st.seen.includes(a.key)?'read':''}" ${a.pid?`data-open="${a.pid}"`:`data-row="${esc(a.ck.slice(2))}"`}>${pic(a.pid?productImg(P(a.pid)):(st.cfavs[a.ck]?imgSrc(a.sid,st.cfavs[a.ck].img,st.cfavs[a.ck].link):""),a.emoji)}
+    <div class="list">${alerts.map(a=>`<div class="alert ${st.seen.includes(a.key)?'read':''}" ${a.pid?`data-open="${a.pid}"`:`data-row="${esc(a.ck.slice(2))}"`}>${picStore(a.pid?storeImg(P(a.pid),a.sid):(st.cfavs[a.ck]?imgSrc(a.sid,st.cfavs[a.ck].img,st.cfavs[a.ck].link):""),a.emoji,a.sid)}
       <div class="info"><div class="name">${esc(a.name)}</div><span class="store-pill" style="background:${S(a.sid).color}">${S(a.sid).name}</span>
         ${a.target!=null?` <span class="alarm-tag">🔔 ≤ ${euro(a.target)}</span>`:` <span class="deal-tag">${a.label?'🏷️ '+esc(a.label):'−'+pct(a.price,a.was)+'%'}</span>`}</div>
       <div class="price"><b>${euro(a.price)}</b>${a.was?`<s>${euro(a.was)}</s>`:''}</div></div>`).join('')
@@ -433,11 +436,11 @@ function go(t,s=null){ if(t!==tab){ query=''; $('#q').value=''; } tab=t; sub=s; 
 function openProduct(pid){
   const p=P(pid); if(!p) return;
   const rows=Object.entries(p.st).sort((a,b)=>unitEff(p,a[0])-unitEff(p,b[0])), na=CMP_STORES.filter(s=>!has(p,s.id)), t=st.targets[pid];
-  sheet(`<div class="sheet-head">${pic(productImg(p),p.emoji)}<div><h3>${esc(p.name)}</h3><div class="meta">${p.cat}</div></div></div>
+  sheet(`<div class="sheet-head"><div class="emoji">${p.emoji}</div><div><h3>${esc(p.name)}</h3><div class="meta">${p.cat}</div></div></div>
     <button class="favbtn ${st.favs.includes(pid)?'on':''}" data-fav="${pid}">${st.favs.includes(pid)?'★ Je volgt dit product':'☆ Volgen (favoriet)'}</button>
     ${alarmBox(pid, median(p), t, p.name)}
     <h2 style="font-size:16px">Prijzen per supermarkt</h2>
-    ${rows.map(([sid,v],i)=>{const pr=promo(p,sid), now=unitEff(p,sid), reg=regOf(p,sid), key=`${pid}|${sid}|${now}`, deal=reg>now+0.005;return `<div class="row ${i===0?'best':''}"><div class="logo-sq" style="background:${S(sid).color}">${S(sid).short}</div>
+    ${rows.map(([sid,v],i)=>{const pr=promo(p,sid), now=unitEff(p,sid), reg=regOf(p,sid), key=`${pid}|${sid}|${now}`, deal=reg>now+0.005;return `<div class="row ${i===0?'best':''}">${storeImg(p,sid)?picStore(storeImg(p,sid),p.emoji,sid):`<div class="logo-sq" style="background:${S(sid).color}">${S(sid).short}</div>`}
       <div class="st">${S(sid).name}${i===0?'<span class="best-label">GOEDKOOPST</span>':''}<span class="pn">${esc(v[1])}${v[2]?' · '+esc(v[2]):''}</span>${pr?`<small>🏷️ ${esc(promoTxt(pr))}${untilTxt(pr[3])}</small>`:v[4]?`<small>🔥 Prijsdaling −${pct(v[0],v[4])}%</small>`:''}</div>
       <div class="pr">${euro(now)}${deal?`<s>${euro(reg)}</s>`:''}</div>
       ${deal?`<button class="buy ${isBought(key)?'done':''}" data-buy="${esc(JSON.stringify({key,name:p.name,sid,price:now,was:reg,qty:pr?pr[1]:1,cat:p.cat}))}">${isBought(key)?'✓':'Gekocht'}</button>`:''}

@@ -308,6 +308,29 @@ try:
     old = json.load(open(IMG_OUT, encoding='utf-8'))
 except Exception:
     old = {}
+
+# foto's van de vergeleken producten: de productpagina bij elke winkel bezoeken (eenmalig per product, daarna uit de cache)
+def page_image(url):
+    t = requests.get(url, headers=UA_WEB, timeout=30).text
+    for rx in (r'<meta[^>]+property="og:image"[^>]+content="([^"]+)"', r'<meta[^>]+content="([^"]+)"[^>]+property="og:image"',
+               r'<meta[^>]+name="twitter:image"[^>]+content="([^"]+)"', r'"image"\s*:\s*\[?\s*"(https?://[^"]+)"'):
+        m = re.search(rx, t)
+        if m and not re.search(r'logo|favicon|placeholder|share|social', m.group(1), re.I):
+            return html.unescape(m.group(1))
+    return '-'      # geen foto gevonden; niet elke dag opnieuw proberen
+try:
+    prods = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'products.json'), encoding='utf-8'))['products']
+except Exception:
+    prods = []
+cache = old.setdefault('url', {})
+todo = [v[3] for p in prods for sid, v in p['st'].items() if sid not in ('ah', 'poiesz') and v[3] not in cache][:250]
+for u in todo:
+    try:
+        cache[u] = page_image(u)
+    except Exception:
+        pass
+    time.sleep(0.4)
+stats['productpaginas'] = f'{len(todo)} nieuw, {sum(1 for v in cache.values() if v != "-")} met foto'
 for st_, m in IMG.items():
     old.setdefault(st_, {}).update(m)
 with open(IMG_OUT, 'w', encoding='utf-8') as f:
