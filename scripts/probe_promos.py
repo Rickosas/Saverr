@@ -1,6 +1,6 @@
 import requests
 U={'user-agent':'Mozilla/5.0 (iPhone)'}
-tests = ['https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png',
+tests = ['https://web-fileserver.dekamarkt.nl/artikelen/268840_2026-11-04_02-31-01-779_f181ffe0-5b16-40d0-8a79-168cb453a855.png?width=200', 'https://web-fileserver.dekamarkt.nl/artikelen/268840_2026-11-04_02-31-01-779_f181ffe0-5b16-40d0-8a79-168cb453a855.png', 'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png',
  'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200',
  'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200&height=200&mode=pad&format=webp',
  'https://web-fileserver.dirk.nl/artikelen/199724_1_467263_638614812972936179.png?width=200&converttowebp=1',
