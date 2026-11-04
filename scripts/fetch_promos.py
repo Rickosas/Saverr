@@ -87,7 +87,66 @@ def fetch_jumbo():
     stats['jumbo_promoties'] = len(seen)
     stats['jumbo'] = len([k for k in items if k.startswith('jumbo|')])
 
-for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo)):
+# ------------------------------------------------------------------ Dirk
+def euro_txt(x): return f'{x:.2f}'.replace('.', ',')
+
+def fetch_dirk():
+    t = requests.get('https://www.dirk.nl/aanbiedingen', headers=UA_WEB, timeout=30).text
+    arr = json.loads(re.search(r'id="__NUXT_DATA__"[^>]*>(.*?)</script>', t, re.S).group(1))
+    def res(i, depth=0):
+        if depth > 14: return None
+        v = arr[i] if isinstance(i, int) else i
+        if isinstance(v, list):
+            if v and v[0] in ('ShallowReactive', 'Reactive', 'Ref', 'ShallowRef'): return res(v[1], depth + 1)
+            return [res(x, depth + 1) for x in v]
+        if isinstance(v, dict): return {k: res(x, depth + 1) for k, x in v.items()}
+        return v
+    groups = res(0)['data']['offers-currentOffers']
+    n = 0
+    for g in groups:
+        for o in g.get('currentOffers') or []:
+            weekend = 'VR, ZA' in (o.get('textPriceSign') or '')
+            end = (o.get('endDate') or '')[:10] or None
+            for pr in o.get('products') or []:
+                price = pr.get('offerPrice') or o.get('offerPrice')
+                if not pr.get('productId') or not price: continue
+                label = ('Weekendactie ' if weekend else 'Actie ') + '€' + euro_txt(price)
+                items[f"dirk|{pr['productId']}"] = dict(l=label, t=end, unit=price, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
+                n += 1
+    stats['dirk'] = n
+
+# ------------------------------------------------------------------ Lidl
+def lidl_norm(s):
+    s = re.sub(r'^[-\s]+', '', (s or '').lower())
+    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9%+ ]', ' ', s)).strip()
+
+def fetch_lidl():
+    t = requests.get('https://www.lidl.nl/c/eten-en-drinken/s10068374', headers=UA_WEB, timeout=30).text
+    n = 0
+    for g in re.findall(r'data-grid-data="([^"]+)"', t):
+        try:
+            j = json.loads(html.unescape(g))
+        except Exception:
+            continue
+        title = j.get('fullTitle') or j.get('title')
+        rp = j.get('regionsPrices') or {}
+        reg = rp.get('1') or (next(iter(rp.values())) if rp else None)
+        if not title or not reg: continue
+        cur = reg.get('currentPrice') or {}
+        plus = (reg.get('currentLidlPlusPrice') or {}).get('price') or {}
+        price, old = cur.get('price'), cur.get('oldPrice') or ((cur.get('discount') or {}).get('deletedPrice'))
+        if price and old and price < old:
+            unit, label, end = price, 'Actie €' + euro_txt(price), (cur.get('endDate') or '')[:10]
+        elif plus.get('price') and price and plus['price'] < price:
+            unit, label, end = plus['price'], 'Lidl Plus €' + euro_txt(plus['price']), (plus.get('endDate') or '')[:10]
+        else:
+            continue
+        if end.startswith('2200'): end = None
+        items[f'lidlname|{lidl_norm(title)}'] = dict(l=label, t=end or None, unit=unit, reg=old or price, name=title)
+        n += 1
+    stats['lidl'] = n
+
+for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo), ('Dirk', fetch_dirk), ('Lidl', fetch_lidl)):
     try:
         fn()
     except Exception as e:

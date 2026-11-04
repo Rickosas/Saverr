@@ -74,10 +74,25 @@ if os.path.exists(_pf):
         PROMOS = _p['items']
 TODAY = datetime.date.today().isoformat()
 
-def promo_key(store, link):
+def lidl_norm(s):
+    s = re.sub(r'^[-\s]+', '', (s or '').lower())
+    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9%+ ]', ' ', s)).strip()
+
+def promo_key(store, item):
+    link = item['l']
     if store == 'ah': return 'ah|' + link.split('/')[0]
     if store == 'jumbo': return 'jumbo|' + link.rstrip('/').rsplit('-', 1)[-1]
+    if store == 'dirk': return 'dirk|' + link.rstrip('/').rsplit('/', 1)[-1]
+    if store == 'lidl':
+        n = lidl_norm(item['n'])
+        if 'lidlname|' + n in PROMOS: return 'lidlname|' + n
+        # zonder merknaam (eerste woord) nog een keer proberen
+        n2 = n.split(' ', 1)[-1]
+        for k in ('lidlname|' + n2,):
+            if k in PROMOS and len(n2) >= 5: return k
+        return None
     return None
+PROMO_STORES = ('ah', 'jumbo', 'dirk', 'lidl')
 
 def _num(x): return float(x.replace(',', '.'))
 def promo_model(label, reg, now=None):
@@ -99,11 +114,11 @@ def promo_model(label, reg, now=None):
     return None
 
 def promo_for(store, item):
-    k = promo_key(store, item['l'])
+    k = promo_key(store, item)
     pr = PROMOS.get(k) if k else None
     if not pr or (pr.get('t') and pr['t'] < TODAY): return 0
     reg = item['p']
-    mod = promo_model(pr['l'], reg, pr.get('now'))
+    mod = (1, pr['unit']) if pr.get('unit') else promo_model(pr['l'], reg, pr.get('now'))
     if not mod: return 0
     mn, unit = mod
     if not (0.2 * reg <= unit <= reg * 0.98): return 0
@@ -172,7 +187,7 @@ def best_match(spec, store):
         extra = [t for t in tokens(it['n']) if t not in qt and t not in BRANDS
                  and not any(t.startswith(x) or x.startswith(t) for x in qt)
                  and not re.fullmatch(r'\d+([,.]\d+)?|\d+(g|kg|ml|l|st)', t)]
-        pr = promo_for(store, it) if store in ('ah', 'jumbo') else 0
+        pr = promo_for(store, it) if store in PROMO_STORES else 0
         cands.append((len(extra), pr[2] if pr else it['p'], it, pr))
     if not cands: return None
     m = min(c[0] for c in cands)
@@ -203,7 +218,7 @@ for i, s in enumerate(stores_present):
     for it in current[s]['d']:
         if not it.get('p') or it['p'] < 0.2 or 'lidlmini' in it['n'].lower(): continue
         w = was_price(s, it)
-        pr = promo_for(s, it) if s in ('ah', 'jumbo') else 0
+        pr = promo_for(s, it) if s in PROMO_STORES else 0
         row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w, pr]
         rows.append(row)
         if w or pr: drops.append(row)
