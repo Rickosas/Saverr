@@ -66,12 +66,12 @@ def was_price(store, item):
     return round(m, 2) if (m and m * 0.3 <= p <= m * (1 - DROP_PCT) and m - p >= DROP_EUR) else 0
 
 # ---------------------------------------------------------------- aanbiedingen (AH bonus, Jumbo)
-PROMOS = {}
+PROMOS, ALDI_OFFERS = {}, []
 _pf = os.path.join(OUT, 'promos.json')
 if os.path.exists(_pf):
     _p = json.load(open(_pf, encoding='utf-8'))
     if _p.get('updated', '') >= (datetime.date.today() - datetime.timedelta(days=8)).isoformat():
-        PROMOS = _p['items']
+        PROMOS, ALDI_OFFERS = _p['items'], _p.get('aldi', [])
 TODAY = datetime.date.today().isoformat()
 
 def lidl_norm(s):
@@ -82,12 +82,12 @@ def promo_key(store, item):
     link = item['l']
     if store == 'ah': return 'ah|' + link.split('/')[0]
     if store == 'jumbo': return 'jumbo|' + link.rstrip('/').rsplit('-', 1)[-1]
-    if store == 'dirk': return 'dirk|' + link.rstrip('/').rsplit('/', 1)[-1]
+    if store in ('dirk', 'dekamarkt', 'poiesz'): return store + '|' + link.rstrip('/').rsplit('/', 1)[-1]
     if store == 'lidl':
         k = 'lidlname|' + lidl_norm(item['n'])   # alleen een exact gelijke productnaam
         return k if k in PROMOS else None
     return None
-PROMO_STORES = ('ah', 'jumbo', 'dirk', 'lidl')
+PROMO_STORES = ('ah', 'jumbo', 'dirk', 'dekamarkt', 'poiesz', 'lidl')
 
 def _num(x): return float(x.replace(',', '.'))
 def promo_model(label, reg, now=None):
@@ -219,6 +219,16 @@ for i, s in enumerate(stores_present):
         row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w, pr]
         rows.append(row)
         if w or pr: drops.append(row)
+# Aldi zit niet in de Checkjebon-data: de aanbiedingen voegen we als losse producten toe
+TODAY_ = datetime.date.today().isoformat()
+aldi_offers = [a for a in ALDI_OFFERS if not a[6] or a[6] >= TODAY_]
+if aldi_offers:
+    ai = len(stores_present)
+    stores_present.append('aldi')
+    current['aldi'] = {'u': 'https://www.aldi.nl/product/', 'd': []}
+    for name, price, strike, unit, slug, lab, until in aldi_offers:
+        row = [ai, name, strike, unit, slug, 0, [lab, 1, price, until or '']]
+        rows.append(row); drops.append(row)
 def deal_ratio(r):  # lager = betere deal
     return min(r[6][2] / r[2] if r[6] else 1, r[2] / r[5] if r[5] else 1)
 drops.sort(key=deal_ratio)

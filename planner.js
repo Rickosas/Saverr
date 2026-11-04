@@ -50,7 +50,7 @@ function evalPlan(ids, sid, persons, storeIds){
   c.ref=ref; c.refSid=refSid; c.saved=Math.max(0,ref-c.total); c.dealSaved=Math.max(0,c.regular-c.total); c.storeSaved=Math.max(0,ref-c.regular);
   return c;
 }
-const planStores = f => (f.allStores||!st.myStores.length?STORES:STORES.filter(s=>st.myStores.includes(s.id))).map(s=>s.id);
+const planStores = f => { const mine=CMP_STORES.filter(s=>st.myStores.includes(s.id)); return (f.allStores||!mine.length?CMP_STORES:mine).map(s=>s.id); };
 
 function makePlan({persons,budget,days,allStores}, fixed=null){
   const pool=RECIPES.filter(recipeOK), stores=planStores({allStores});

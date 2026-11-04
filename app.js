@@ -10,6 +10,7 @@ const STORE_INFO = {
   dirk:{name:'Dirk',short:'D',color:'#d7141a'}, hoogvliet:{name:'Hoogvliet',short:'H',color:'#003f8a'},
   dekamarkt:{name:'DekaMarkt',short:'DK',color:'#e30613'}, spar:{name:'SPAR',short:'S',color:'#007a3d'},
   poiesz:{name:'Poiesz',short:'PZ',color:'#c8102e'}, vomar:{name:'Vomar',short:'V',color:'#00843d'},
+  aldi:{name:'Aldi',short:'A',color:'#00205b'},
 };
 let STORES = [];                       // gevuld uit meta.json
 const S = id => STORES.find(s=>s.id===id) || {id, name:id, short:'?', color:'#888'};
@@ -49,7 +50,7 @@ const WEEK = isoWeek(), weekNr = +WEEK.split('W')[1];
 const today = new Date();
 
 /* ================= data ================= */
-let META=null, PRODUCTS=[], DROPS=[], catalog=null, catalogLoading=false;
+let META=null, PRODUCTS=[], DROPS=[], catalog=null, catalogLoading=false, CMP_STORES=[];
 const P = id => PRODUCTS.find(p=>p.id===id);
 const has = (p,sid) => p.st[sid]!=null;
 const price = (p,sid) => p.st[sid][0];
@@ -91,6 +92,7 @@ async function loadData(){
   const [m,p,d] = await Promise.all([get('meta.json'),get('products.json'),get('drops.json')]);
   META=m; PRODUCTS=p.products; DROPS_SRC=d; DROPS=d.rows;
   STORES = m.stores.map(id=>({id,...STORE_INFO[id]}));
+  CMP_STORES = STORES.filter(s=>PRODUCTS.some(p=>has(p,s.id)));   // winkels met gewone prijzen (Aldi alleen aanbiedingen)
   st.myStores = st.myStores.filter(id=>m.stores.includes(id));
 }
 function loadCatalog(){
@@ -186,7 +188,7 @@ function parseList(){
 }
 function compareList(onlyMine){
   const {found}=parseList();
-  return STORES.filter(s=>!onlyMine||st.myStores.includes(s.id)).map(s=>({s,
+  return CMP_STORES.filter(s=>!onlyMine||st.myStores.includes(s.id)).map(s=>({s,
     total:found.reduce((t,f)=>t+(has(f.p,s.id)?costAt(f.p,s.id,f.qty):f.qty*median(f.p)),0),
     missing:found.filter(f=>!has(f.p,s.id)).length, drops:found.filter(f=>has(f.p,s.id)&&(was(f.p,s.id)||promo(f.p,s.id))).length}))
     .sort((a,b)=>(a.missing-b.missing)||(a.total-b.total));
@@ -199,7 +201,7 @@ const isStandalone = () => matchMedia('(display-mode: standalone)').matches || n
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 
 /* ================= views ================= */
-const SRC = () => `<div class="srcnote">💶 Prijzen van ${STORES.length} supermarkten via <a href="https://www.checkjebon.nl" target="_blank" rel="noopener">Checkjebon.nl</a> (stand ${fmtDate(META.updated)}). 🏷️ Aanbiedingen: AH-bonus, Jumbo, Dirk en Lidl${META.promos_updated?' van '+fmtDate(META.promos_updated):''}, plus prijsdalingen. Alles wordt elke ochtend bijgewerkt.</div>`;
+const SRC = () => `<div class="srcnote">💶 Prijzen van ${STORES.length} supermarkten via <a href="https://www.checkjebon.nl" target="_blank" rel="noopener">Checkjebon.nl</a> (stand ${fmtDate(META.updated)}). 🏷️ Aanbiedingen: AH-bonus, Jumbo, Dirk, DekaMarkt, Poiesz, Lidl en Aldi${META.promos_updated?' van '+fmtDate(META.promos_updated):''}, plus prijsdalingen. Alles wordt elke ochtend bijgewerkt.</div>`;
 
 function itemHTML(p){
   const [sid]=cheapest(p), d=pDeals(p), t=st.targets[p.id], now=unitEff(p,sid), reg=regOf(p,sid);
@@ -274,7 +276,7 @@ function viewBrowse(){
   if(bmode==='drops'){
     let rows=liveDrops().filter(r=>(dropFilter==='all'||st.myStores.includes(rowStore(r,DROPS_SRC))) && (!query||r[1].toLowerCase().includes(query)));
     return seg+`<div class="chips"><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">📍 Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>
-      <p class="hint">${rows.length} aanbiedingen: AH-bonus, acties van Jumbo, Dirk en Lidl, en prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
+      <p class="hint">${rows.length} aanbiedingen van ${new Set(rows.map(r=>r[0])).size} supermarkten, plus prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
       <div class="list">${rows.slice(0,120).map(r=>rowHTML(r,DROPS_SRC)).join('')||'<div class="empty">Geen prijsdalingen gevonden.</div>'}</div>${SRC()}`;
   }
   const cats=['Alles','🔥 Aanbiedingen',...new Set(PRODUCTS.map(p=>p.cat))];
@@ -381,7 +383,7 @@ function viewStores(){
     ${rows[0]?`<div class="verdict">🛒 Beste winkel voor jouw boodschappenlijst: <b>${rows[0].s.name}</b> (${euro(rows[0].total)})</div>`:''}
     ${STORES.map(s=>`<div class="row"><div class="logo-sq" style="background:${s.color}">${s.short}</div><div class="st">${s.name}</div>
       <button class="switch ${st.myStores.includes(s.id)?'on':''}" data-store="${s.id}" aria-label="${s.name}"></button></div>`).join('')}
-    <p class="demo">Aldi en Coop zitten (nog) niet in de open prijsdata.</p>`;
+    <p class="demo">Van Aldi tonen we alleen de aanbiedingen (de gewone prijzen zitten niet in de open data). Coop en Vomar zitten er nog niet in.</p>`;
 }
 function viewSettings(){
   const perm = 'Notification' in window ? Notification.permission : 'niet ondersteund';
@@ -415,7 +417,7 @@ function go(t,s=null){ if(t!==tab){ query=''; $('#q').value=''; } tab=t; sub=s; 
 /* ---------- product-sheet (vergeleken product) ---------- */
 function openProduct(pid){
   const p=P(pid); if(!p) return;
-  const rows=Object.entries(p.st).sort((a,b)=>unitEff(p,a[0])-unitEff(p,b[0])), na=STORES.filter(s=>!has(p,s.id)), t=st.targets[pid];
+  const rows=Object.entries(p.st).sort((a,b)=>unitEff(p,a[0])-unitEff(p,b[0])), na=CMP_STORES.filter(s=>!has(p,s.id)), t=st.targets[pid];
   sheet(`<div class="sheet-head"><div class="emoji">${p.emoji}</div><div><h3>${esc(p.name)}</h3><div class="meta">${p.cat}</div></div></div>
     <button class="favbtn ${st.favs.includes(pid)?'on':''}" data-fav="${pid}">${st.favs.includes(pid)?'★ Je volgt dit product':'☆ Volgen (favoriet)'}</button>
     ${alarmBox(pid, median(p), t, p.name)}

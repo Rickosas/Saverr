@@ -90,8 +90,7 @@ def fetch_jumbo():
 # ------------------------------------------------------------------ Dirk
 def euro_txt(x): return f'{x:.2f}'.replace('.', ',')
 
-def fetch_dirk():
-    t = requests.get('https://www.dirk.nl/aanbiedingen', headers=UA_WEB, timeout=30).text
+def nuxt_payload(t):
     arr = json.loads(re.search(r'id="__NUXT_DATA__"[^>]*>(.*?)</script>', t, re.S).group(1))
     memo, busy = {}, set()
     def res(i):
@@ -108,22 +107,92 @@ def fetch_dirk():
             out = v
         busy.discard(i); memo[i] = out
         return out
-    groups = res(0)['data']['offers-currentOffers']
+    return res(0)
+
+def walk(o, pred, out):
+    if isinstance(o, dict):
+        if pred(o): out.append(o)
+        for v in o.values(): walk(v, pred, out)
+    elif isinstance(o, list):
+        for v in o: walk(v, pred, out)
+    return out
+
+MECH = re.compile(r'gratis|voor|korting|halve', re.I)
+
+def fetch_detailresult(store, url):
+    """Dirk en DekaMarkt draaien op hetzelfde systeem."""
+    t = requests.get(url, headers=UA_WEB, timeout=30).text
+    offers = walk(nuxt_payload(t), lambda d: 'offerPrice' in d and isinstance(d.get('products'), list), [])
     n = 0
-    for g in groups or []:
-        if not isinstance(g, dict): continue
-        for o in g.get('currentOffers') or []:
-            if not isinstance(o, dict): continue
-            weekend = 'VR, ZA' in (o.get('textPriceSign') or '')
-            end = (o.get('endDate') or '')[:10] or None
-            for pr in o.get('products') or []:
-                if not isinstance(pr, dict): continue
-                price = pr.get('offerPrice') or o.get('offerPrice')
-                if not pr.get('productId') or not price: continue
-                label = ('Weekendactie ' if weekend else 'Actie ') + '€' + euro_txt(price)
-                items[f"dirk|{pr['productId']}"] = dict(l=label, t=end, unit=price, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
-                n += 1
-    stats['dirk'] = n
+    for o in offers:
+        sign = re.sub(r'\s+', ' ', (o.get('textPriceSign') or '')).strip()
+        end = (o.get('endDate') or '')[:10] or None
+        mech = bool(MECH.search(sign))
+        for pr in o['products']:
+            if not isinstance(pr, dict) or not pr.get('productId'): continue
+            price = pr.get('offerPrice') or o.get('offerPrice')
+            if mech:
+                label = sign[:1].upper() + sign[1:].lower()        # bijv. "1+1 gratis", "2 voor 1,99", "25% korting"
+                items[f"{store}|{pr['productId']}"] = dict(l=label, t=end, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
+            elif price:
+                label = ('Weekendactie ' if 'VR, ZA' in sign else 'Actie ') + '€' + euro_txt(price)
+                items[f"{store}|{pr['productId']}"] = dict(l=label, t=end, unit=price, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
+            else:
+                continue
+            n += 1
+    stats[store] = n
+
+def fetch_dirk(): fetch_detailresult('dirk', 'https://www.dirk.nl/aanbiedingen')
+def fetch_deka(): fetch_detailresult('dekamarkt', 'https://www.dekamarkt.nl/aanbiedingen')
+
+# ------------------------------------------------------------------ Poiesz
+def fetch_poiesz():
+    t = requests.get('https://webwinkel.poiesz-supermarkten.nl/aanbiedingen', headers=UA_WEB, timeout=30).text
+    promos = walk(nuxt_payload(t), lambda d: 'offerTypeLine1' in d and 'productIDs' in d, [])
+    n = 0
+    for o in promos:
+        typ = ' '.join(str(o.get(k) or '') for k in ('offerTypeLine1', 'offerTypeLine2', 'offerTypeLine3')).strip()
+        lo, hi = o.get('newPriceLow'), o.get('newPriceHigh')
+        end = (o.get('validUntil') or '')[:10] or None
+        if end:  # 'validUntil' is middernacht ná de laatste dag
+            end = (datetime.date.fromisoformat(end) - datetime.timedelta(days=1)).isoformat()
+        m = re.match(r'(\d+)\s*VOOR', typ, re.I)
+        per_product = {p.get('id'): p for p in (o.get('overviewProducts') or []) if isinstance(p, dict)}
+        for pid in o.get('productIDs') or []:
+            op = per_product.get(pid, {})
+            if m and lo:
+                d = dict(l=f'{m.group(1)} voor {euro_txt(lo)}')
+            elif MECH.search(typ):
+                d = dict(l=typ[:1].upper() + typ[1:].lower())
+            elif lo and (lo == hi or op.get('price')):
+                price = op.get('price') or lo
+                d = dict(l='Actie €' + euro_txt(price), unit=price)
+            else:
+                continue
+            d.update(t=end, reg=op.get('strikeThroughPrice') or None, name=o.get('commercialTextLine1'))
+            items[f'poiesz|{pid}'] = d; n += 1
+    stats['poiesz'] = n
+
+# ------------------------------------------------------------------ Aldi (zit niet in Checkjebon: we nemen de aanbiedingen zelf op)
+ALDI = []
+def fetch_aldi():
+    t = requests.get('https://www.aldi.nl/aanbiedingen.html', headers=UA_WEB, timeout=30).text
+    nd = json.loads(re.search(r'id="__NEXT_DATA__"[^>]*>(.*?)</script>', t, re.S).group(1))
+    api = walk(nd, lambda d: 'apiData' in d, [])
+    data = json.loads(api[0]['apiData'])
+    for entry in data:
+        res = entry[1].get('res') if isinstance(entry, list) and len(entry) > 1 else None
+        if not isinstance(res, dict) or 'algoliaDataMap' not in res: continue
+        for v in res['algoliaDataMap'].values():
+            cp = v.get('currentPrice') or {}
+            price, strike = cp.get('priceValue'), cp.get('strikePrice')
+            if isinstance(strike, dict): strike = strike.get('priceValue') or strike.get('value')
+            if not price or not strike or strike <= price: continue          # alleen echte kortingen
+            lab = ((cp.get('priceTagLabels') or {}).get('promoText1') or '').strip()
+            until = ((v.get('promotionPrices') or [{}])[0]).get('validUntilLocalDate')
+            ALDI.append([v.get('name'), round(price, 2), round(strike, 2), v.get('salesUnit') or '', (v.get('productSlug') or '') + '.html',
+                         lab if lab and lab not in ('OP=OP', 'NU VOOR', 'VANAF') else f'-{round((1 - price / strike) * 100)}%', until])
+    stats['aldi'] = len(ALDI)
 
 # ------------------------------------------------------------------ Lidl
 def lidl_norm(s):
@@ -156,7 +225,8 @@ def fetch_lidl():
         n += 1
     stats['lidl'] = n
 
-for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo), ('Dirk', fetch_dirk), ('Lidl', fetch_lidl)):
+for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo), ('Dirk', fetch_dirk), ('DekaMarkt', fetch_deka),
+                 ('Poiesz', fetch_poiesz), ('Lidl', fetch_lidl), ('Aldi', fetch_aldi)):
     try:
         fn()
     except Exception as e:
@@ -166,5 +236,5 @@ if not items:
     print('Geen aanbiedingen opgehaald; vorig bestand blijft staan.')
     sys.exit(0)
 with open(OUT, 'w', encoding='utf-8') as f:
-    json.dump(dict(updated=datetime.date.today().isoformat(), stats=stats, items=items), f, ensure_ascii=False, separators=(',', ':'))
+    json.dump(dict(updated=datetime.date.today().isoformat(), stats=stats, items=items, aldi=ALDI), f, ensure_ascii=False, separators=(',', ':'))
 print('Aanbiedingen opgehaald:', stats)

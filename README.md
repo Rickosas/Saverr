@@ -19,7 +19,7 @@ Saverr vergelijkt de prijzen van 10 Nederlandse supermarkten en laat je weten wa
 ## Wat zit erin
 - Prijsvergelijking van ±40 veelgekochte producten over alle supermarkten
 - Zoeken in het hele assortiment (±107.000 producten)
-- Actuele aanbiedingen van AH (bonus), Jumbo, Dirk en Lidl, plus prijsdalingen
+- Actuele aanbiedingen van AH (bonus), Jumbo, Dirk, DekaMarkt, Poiesz, Lidl en Aldi, plus prijsdalingen
 - Favorieten, prijsalarm en meldingen
 - Boodschappenlijstje: bij welke winkel ben je het goedkoopst uit
 - 🤖 Help mij besparen: weekmenu binnen je budget, met boodschappenlijst en besparing
