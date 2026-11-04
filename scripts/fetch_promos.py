@@ -186,11 +186,12 @@ def fetch_aldi():
         for v in res['algoliaDataMap'].values():
             cp = v.get('currentPrice') or {}
             price, strike = cp.get('priceValue'), cp.get('strikePrice')
-            if isinstance(strike, dict): strike = strike.get('priceValue') or strike.get('value')
+            if isinstance(strike, dict): strike = strike.get('strikePriceValue') or strike.get('priceValue') or strike.get('value')
             if not price or not strike or strike <= price: continue          # alleen echte kortingen
             lab = ((cp.get('priceTagLabels') or {}).get('promoText1') or '').strip()
             until = ((v.get('promotionPrices') or [{}])[0]).get('validUntilLocalDate')
-            ALDI.append([v.get('name'), round(price, 2), round(strike, 2), v.get('salesUnit') or '', (v.get('productSlug') or '') + '.html',
+            nm = ((v.get('brandName') or '').title() + ' ' + (v.get('name') or '')).strip()
+            ALDI.append([nm, round(price, 2), round(strike, 2), v.get('salesUnit') or '', (v.get('productSlug') or '') + '.html',
                          lab if lab and lab not in ('OP=OP', 'NU VOOR', 'VANAF') else f'-{round((1 - price / strike) * 100)}%', until])
     stats['aldi'] = len(ALDI)
 
