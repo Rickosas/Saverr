@@ -26,7 +26,7 @@ const MONTHS = ['januari','februari','maart','april','mei','juni','juli','august
 const DAYS = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const REWARDS = [{pts:100,eur:1},{pts:500,eur:5},{pts:1000,eur:10}];
 const EARN = [['🏷️','Prijsdaling gebruiken (Gekocht)','+10'],['🛒','Boodschappenlijst vergelijken','+20 per week'],
-  ['🎯','Challenges voltooien','+100 tot +500'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
+  ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+100 tot +500'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
 
 /* ================= opslag op je telefoon ================= */
 const KEY = 'saverr_beta_v1';
@@ -154,17 +154,18 @@ function challenges(){
 /* ================= lijstje ================= */
 function parseList(){
   const found=[], missing=[];
-  st.list.split(/[,\n]/).map(t=>t.trim()).filter(Boolean).forEach(t=>{
+  st.list.split(/[,\n]/).map(t=>t.trim()).filter(Boolean).forEach(raw=>{
+    const m=raw.match(/^(\d+)\s*[x×]\s*(.+)$/i), qty=m?+m[1]:1, t=m?m[2].trim():raw;
     const k=t.toLowerCase(); let id=SYN[k]||SYN[k.replace(/(en|s)$/,'')];
     if(!id){ const m=PRODUCTS.find(p=>p.name.toLowerCase().includes(k)); id=m&&m.id; }
-    if(id&&P(id)){ if(!found.some(f=>f.p.id===id)) found.push({term:t,p:P(id)}); } else missing.push(t);
+    if(id&&P(id)){ const ex=found.find(f=>f.p.id===id); ex?ex.qty+=qty:found.push({term:t,p:P(id),qty}); } else missing.push(t);
   });
   return {found,missing};
 }
 function compareList(onlyMine){
   const {found}=parseList();
   return STORES.filter(s=>!onlyMine||st.myStores.includes(s.id)).map(s=>({s,
-    total:found.reduce((t,f)=>t+(has(f.p,s.id)?price(f.p,s.id):median(f.p)),0),
+    total:found.reduce((t,f)=>t+f.qty*(has(f.p,s.id)?price(f.p,s.id):median(f.p)),0),
     missing:found.filter(f=>!has(f.p,s.id)).length, drops:found.filter(f=>has(f.p,s.id)&&was(f.p,s.id)).length}))
     .sort((a,b)=>(a.missing-b.missing)||(a.total-b.total));
 }
@@ -214,8 +215,9 @@ function viewHome(){
   const mine = DROPS.filter(r=>st.myStores.includes(rowStore(r,DROPS_SRC))).slice(0,5);
   return `${installBanner()}
     <p class="hello">${['Goedenacht','Goedemorgen','Goedemiddag','Goedenavond'][Math.floor(today.getHours()/6)]}! Zo staat je spaarpot ervoor 👇</p>
-    <div class="hero"><div class="lbl">Deze week bespaard</div><div class="amt">${euro(ws)}</div>
-      <span class="trend">${buysWeek().length} prijsdalingen gebruikt</span>
+    <button class="aicta" data-sub="planner"><span class="i">🤖</span><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je weekmenu':'Maak een weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
+    <div class="hero" data-sub="week" style="cursor:pointer"><div class="lbl">Deze week bespaard</div><div class="amt">${euro(ws)}</div>
+      <span class="trend">${buysWeek().length} prijsdalingen gebruikt · weekoverzicht ›</span>
       <div class="bars">${hist.map(h=>`<div class="${h.cur?'cur':''}"><i style="height:${Math.max(4,h.v/max*48)}px"></i><span>wk ${h.w}</span></div>`).join('')}</div></div>
     <div class="stats">
       <div class="stat"><span class="ico">📅</span><b>${euro(month)}</b><span>bespaard in ${MONTHS[today.getMonth()]}</span></div>
@@ -299,8 +301,8 @@ function viewList(){
       ${same.length>1?`<div class="verdict">Je bespaart <b>${euro(worst.total-win.total)}</b> door deze producten bij <b>${win.s.name}</b> te kopen.</div>`:''}
       <h2>Jouw lijstje bij ${win.s.name}</h2>
       <div class="list">${found.map(f=>{const ok=has(f.p,win.s.id), w=ok&&was(f.p,win.s.id);return `<div class="item" data-open="${f.p.id}"><div class="emoji">${f.p.emoji}</div>
-        <div class="info"><div class="name">${esc(f.p.name)}</div><div class="meta">${ok?esc(f.p.st[win.s.id][1]):'Niet gevonden bij '+win.s.name}</div>${w?`<span class="deal-tag">🔥 −${pct(price(f.p,win.s.id),w)}%</span>`:''}</div>
-        <div class="price"><b>${ok?euro(price(f.p,win.s.id)):'–'}</b>${w?`<s>${euro(w)}</s>`:''}</div></div>`}).join('')}</div>`
+        <div class="info"><div class="name">${f.qty>1?f.qty+'× ':''}${esc(f.p.name)}</div><div class="meta">${ok?esc(f.p.st[win.s.id][1]):'Niet gevonden bij '+win.s.name}</div>${w?`<span class="deal-tag">🔥 −${pct(price(f.p,win.s.id),w)}%</span>`:''}</div>
+        <div class="price"><b>${ok?euro(f.qty*price(f.p,win.s.id)):'–'}</b>${w?`<s>${euro(f.qty*w)}</s>`:''}</div></div>`}).join('')}</div>`
     : found.length?'':'<div class="empty">Voeg producten toe om te vergelijken.</div>'}`;
 }
 
@@ -374,7 +376,7 @@ function viewSettings(){
 /* ================= render ================= */
 function render(){
   if(!META) return;
-  const v = sub ? {challenges:viewChallenges,rewards:viewRewards,stores:viewStores,settings:viewSettings}[sub]
+  const v = sub ? {challenges:viewChallenges,rewards:viewRewards,stores:viewStores,settings:viewSettings,planner:viewPlanner,week:viewWeek}[sub]
                 : {home:viewHome,browse:viewBrowse,favs:viewFavs,list:viewList,alerts:viewAlerts,more:viewMore}[tab];
   $('#main').innerHTML = v();
   $('#searchWrap').style.display = (!sub&&(tab==='browse'||tab==='favs'))?'flex':'none';
@@ -468,6 +470,10 @@ document.addEventListener('click', e=>{
   if(x=el('[data-buy]')){ const o=JSON.parse(x.dataset.buy); markBought(o); o.key.includes('c:')||!P(o.key.split('|')[0])?openRow(o.sid,o.key.split('|').slice(1,-1).join('|')):openProduct(o.key.split('|')[0]); return; }
   if(x=el('nav button')){ go(x.dataset.tab); return; }
   if(x=el('[data-go]')){ go('more',x.dataset.go); return; }
+  if(x=el('[data-sub]')){ sub=x.dataset.sub; render(); $('#main').scrollTop=0; return; }
+  if(x=el('[data-pstep]')){ const [k,d,mn,mx]=x.dataset.pstep.split('|'); planForm[k]=Math.min(+mx,Math.max(+mn,planForm[k]+ +d)); render(); return; }
+  if(x=el('[data-pall]')){ planForm.allStores=x.dataset.pall==='1'; render(); return; }
+  if(x=el('[data-swap]')){ doPlan(+x.dataset.swap); return; }
   if(x=el('[data-bmode]')){ bmode=x.dataset.bmode; const q=x.dataset.q; tab='browse'; sub=null; if(q){ query=q.toLowerCase(); $('#q').value=q; } else if(!x.closest('.seg')){ query=''; $('#q').value=''; } render(); $('#main').scrollTop=0; return; }
   if(x=el('[data-cat]')){ cat=x.dataset.cat; render(); return; }
   if(x=el('[data-dropf]')){ dropFilter=x.dataset.dropf; render(); return; }
@@ -482,6 +488,9 @@ document.addEventListener('click', e=>{
     else if(a==='settarget'){ const k=x.dataset.k; setTarget(k, parseFloat(($('#tIn').value||'').replace(',','.'))); k.startsWith('c:')?openRow(...splitC(k)):openProduct(k); }
     else if(a==='deltarget'){ const k=x.dataset.k; delete st.targets[k]; save(); buildAlerts(); k.startsWith('c:')?openRow(...splitC(k)):openProduct(k); }
     else if(a==='notif') enableNotifications();
+    else if(a==='mkplan'){ x.textContent='⏳ Bezig met rekenen…'; setTimeout(()=>doPlan(),30); }
+    else if(a==='plan2list'){ const c=planCost(st.plan.ids,st.plan.sid,st.plan.persons); st.list=c.items.map(it=>(it.n>1?it.n+'x ':'')+it.p.name).join(', '); listShown=true; save(); go('list'); push('🛒 Je weekmenu staat op je boodschappenlijst.'); }
+    else if(a==='share') shareWeek();
     else if(a==='notifoff'){ st.notif=false; save(); render(); }
     else if(a==='install' && deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{ deferredInstall=null; render(); }); }
     else if(a==='reset'){ if(x.dataset.sure){ localStorage.removeItem(KEY); location.reload(); } else { x.dataset.sure='1'; x.textContent='Zeker weten? Tik nogmaals om alles te wissen'; x.style.color='var(--deal)'; } }

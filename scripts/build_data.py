@@ -88,6 +88,14 @@ EXTRA = {
     'avocado': dict(ban=['stukjes']), 'broccoli': dict(ban=['fish', 'iglo']),
     'kipfilet': dict(ban=['americanos']), 'redbull': dict(ban=['7+1']),
     'chips': dict(ban=['nacho', 'lay', 'banan']),
+    'kaas-geraspt': dict(ban=['kokos']),
+    'wraps': dict(skip=['lidl'], ban=['wecare', 'mini', 'volkoren', 'chips', 'salsa', 'kit', 'saus', 'taco', 'kruiden', 'spinazie', 'tomaat', 'meergranen', 'glutenvrij', 'kip', 'vega', 'groente'], kind=None),
+    'mais': dict(ban=['snack', 'ham']),
+    'boerenkool': dict(ban=['stamppot', 'rookworst', 'worst']),
+    'spekjes': dict(ban=['plant', 'vivera', 'vega']),
+    'stroop': dict(ban=['wafel', 'koek', 'stift', 'bungel']),
+    'nasigroente': dict(ban=['schijven', 'speciaal', 'padifood', 'ah nasi |']),
+    'sperziebonen': dict(ban=['gebroken']),
 }
 NAMES = {'aardappelen': 'Aardappelen 3 kg', 'kipfilet': 'Kipfilet ±500g', 'spa': 'Bruisend mineraalwater 1,5L', 'zalm': 'Zalmfilet ±250g',
          'paprika': 'Paprika mix 3 st', 'hagelslag': 'Hagelslag puur', 'griekse': 'Yoghurt Griekse stijl 1kg', 'kaas': 'Jong belegen kaasplakken',
@@ -131,7 +139,7 @@ for sp in SPECS:
     pid = sp[0]
     if pid in DROP: continue
     e = EXTRA.get(pid, {})
-    spec = dict(inc=sp[4], exc=sp[5], kind=sp[6], lo=sp[7], hi=sp[8], ban=e.get('ban', []))
+    spec = dict(inc=sp[4], exc=sp[5], kind=e.get('kind', sp[6]), lo=sp[7], hi=sp[8], ban=e.get('ban', []))
     st = {}
     for s in STORES:
         if s not in current or s in e.get('skip', []): continue

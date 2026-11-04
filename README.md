@@ -22,6 +22,8 @@ Saverr vergelijkt de prijzen van 10 Nederlandse supermarkten en laat je weten wa
 - Echte prijsdalingen: goedkoper dan de hoogste prijs van de afgelopen 4 weken
 - Favorieten, prijsalarm en meldingen
 - Boodschappenlijstje: bij welke winkel ben je het goedkoopst uit
+- 🤖 Help mij besparen: weekmenu binnen je budget, met boodschappenlijst en besparing
+- 📊 Weekoverzicht met deelknop voor WhatsApp
 - Dashboard met je besparingen, challenges en punten
 - Werkt offline; je gegevens blijven op je eigen telefoon
 
