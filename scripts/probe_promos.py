@@ -1,31 +1,25 @@
-# Tijdelijke test: zijn de bonus-API's van AH en Jumbo bereikbaar vanaf GitHub?
-import json, requests
-def show(name, r, n=1500):
-    print(f'\n===== {name}: HTTP {r.status_code}')
-    print(r.text[:n])
+# Tijdelijke test, ronde 2
+import json, re, requests
+def show(name, r, n=1500): print(f'\n===== {name}: HTTP {r.status_code}'); print(r.text[:n])
 AH_H = {'x-application': 'AHWEBSHOP', 'user-agent': 'Appie/8.22.3 Model/phone Android/13', 'content-type': 'application/json; charset=UTF-8'}
+tok = requests.post('https://api.ah.nl/mobile-auth/v1/auth/token/anonymous', headers=AH_H, json={'clientId': 'appie'}, timeout=20).json()['access_token']
+H = {**AH_H, 'Authorization': 'Bearer ' + tok}
+r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params={'query': 'kaas', 'size': 50, 'page': 0, 'sortOn': 'RELEVANCE', 'filters': 'bonus'}, headers=H, timeout=20)
 try:
-    r = requests.post('https://api.ah.nl/mobile-auth/v1/auth/token/anonymous', headers=AH_H, json={'clientId': 'appie'}, timeout=20)
-    show('AH token', r, 200)
-    tok = r.json()['access_token']; H = {**AH_H, 'Authorization': 'Bearer ' + tok}
-    r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params={'query': 'rookworst', 'size': 3, 'page': 0, 'sortOn': 'RELEVANCE'}, headers=H, timeout=20)
-    show('AH search rookworst', r, 2500)
-    r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params={'size': 5, 'page': 0, 'sortOn': 'RELEVANCE', 'filters': 'bonus'}, headers=H, timeout=20)
-    show('AH search bonus filter (geen query)', r, 1500)
-    r = requests.get('https://api.ah.nl/mobile-services/bonuspage/v1/metadata', headers=H, timeout=20)
-    show('AH bonus metadata', r, 2000)
-except Exception as e:
-    print('AH fout', e)
-for v in ['v17', 'v18']:
+    j = r.json(); print('\n===== AH kaas+bonus', r.status_code, j.get('page'))
+    for p in j.get('products', [])[:8]: print(p['webshopId'], p['title'], p.get('bonusMechanism'), p.get('currentPrice'), p.get('priceBeforeBonus'), p.get('bonusEndDate'))
+except Exception as e: show('AH kaas+bonus', r)
+# AH bonus via website graphql
+q = {"operationName": "FetchBonusPromotions", "variables": {"periodStart": "2026-11-02", "periodEnd": "2026-11-08"},
+     "query": "query FetchBonusPromotions($periodStart: String, $periodEnd: String) { bonusPromotions(filterSet: WEB_BONUS_PAGE, input: {periodStart: $periodStart, periodEnd: $periodEnd}) { id title promotionLabels { topText centerText bottomText } price { now { amount } was { amount } } products { id title } } }"}
+r = requests.post('https://www.ah.nl/gql', json=q, headers={'content-type': 'application/json', 'user-agent': 'Mozilla/5.0', 'x-client-name': 'ah-bonus', 'x-client-version': '1.0'}, timeout=30)
+show('AH gql bonus', r, 2500)
+# Jumbo product- en aanbiedingenpagina
+UA = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36', 'accept-language': 'nl-NL,nl'}
+for url in ['https://www.jumbo.com/producten/jumbo-rookworst-275g-500706PAK', 'https://www.jumbo.com/aanbiedingen/nu']:
     try:
-        r = requests.get(f'https://mobileapi.jumbo.com/{v}/search', params={'q': 'rookworst', 'limit': 2}, headers={'user-agent': 'Jumbo/9.0 (Android)'}, timeout=20)
-        show(f'Jumbo {v} search', r, 2000)
-        r = requests.get(f'https://mobileapi.jumbo.com/{v}/promotion-overview', headers={'user-agent': 'Jumbo/9.0 (Android)'}, timeout=20)
-        show(f'Jumbo {v} promotions', r, 1500)
-    except Exception as e:
-        print('Jumbo fout', v, e)
-try:
-    r = requests.get('https://www.jumbo.com/api/graphql', timeout=20, headers={'user-agent': 'Mozilla/5.0'})
-    show('Jumbo web graphql GET', r, 400)
-except Exception as e:
-    print('Jumbo graphql fout', e)
+        r = requests.get(url, headers=UA, timeout=30)
+        t = r.text; print(f'\n===== Jumbo {url}: HTTP {r.status_code} len {len(t)}')
+        for k in ['__NEXT_DATA__', '__NUXT__', 'application/ld+json', 'promotion', 'tag', '1+1', 'halve prijs', 'korting']:
+            i = t.find(k); print(k, i, t[i-80:i+200].replace('\n', ' ') if i >= 0 else '')
+    except Exception as e: print('Jumbo fout', e)
