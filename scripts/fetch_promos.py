@@ -32,28 +32,47 @@ def fetch_ah():
     H = {'x-application': 'AHWEBSHOP', 'user-agent': 'Appie/8.22.3 Model/phone Android/13', 'content-type': 'application/json; charset=UTF-8'}
     tok = requests.post('https://api.ah.nl/mobile-auth/v1/auth/token/anonymous', headers=H, json={'clientId': 'appie'}, timeout=20).json()['access_token']
     H['Authorization'] = 'Bearer ' + tok
+    SKIP = re.compile(r'volume voordeel|kaartkorting|feestfavoriet|gall', re.I)
+    horizon = (datetime.date.today() + datetime.timedelta(days=45)).isoformat()
     def add(products):
         for p in products:
-            mech = p.get('bonusMechanism')
-            if not mech or not p.get('webshopId'): continue
-            items[f"ah|wi{p['webshopId']}"] = dict(l=mech.strip(), t=p.get('bonusEndDate'), now=p.get('currentPrice'),
-                                                   reg=p.get('priceBeforeBonus'), name=p.get('title'))
+            mech = (p.get('bonusMechanism') or '').strip()
+            end = p.get('bonusEndDate')
+            # alleen echte (week)acties: geen permanente volumevoordelen of acties die "tot 2999" lopen
+            if not mech or not p.get('webshopId') or SKIP.search(mech) or (end and end > horizon): continue
+            items[f"ah|wi{p['webshopId']}"] = dict(l=mech, t=end, now=p.get('currentPrice'), reg=p.get('priceBeforeBonus'), name=p.get('title'))
     def search(params):
         r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params=params, headers=H, timeout=30)
         r.raise_for_status(); return r.json()
-    # het hele assortiment per categorie doorlopen, alleen bonusproducten (bonus=true) → de complete bonuslijst
-    cats = requests.get('https://api.ah.nl/mobile-services/v1/product-shelves/categories', headers=H, timeout=30).json()
-    for c in cats:
+    def crawl(tax_id, name):
         page = 0
-        while True:
+        while page < 4:                       # AH toont maximaal 3000 resultaten (4 pagina's van 750)
             try:
-                j = search({'taxonomyId': c['id'], 'bonus': 'true', 'size': 750, 'page': page, 'sortOn': 'RELEVANCE'})
+                j = search({'taxonomyId': tax_id, 'bonus': 'true', 'size': 750, 'page': page, 'sortOn': 'RELEVANCE'})
             except Exception as e:
-                print('AH categorie mislukt:', c.get('name'), e); break
+                print('AH mislukt:', name, e); return
             add(j.get('products', []))
             page += 1
-            if page >= (j.get('page') or {}).get('totalPages', 1) or page > 20: break
+            if page >= (j.get('page') or {}).get('totalPages', 1): return
             time.sleep(0.3)
+    # het hele assortiment per categorie doorlopen (grote categorieën per subcategorie) → de complete bonuslijst
+    cats = requests.get('https://api.ah.nl/mobile-services/v1/product-shelves/categories', headers=H, timeout=30).json()
+    for c in cats:
+        try:
+            first = search({'taxonomyId': c['id'], 'bonus': 'true', 'size': 1, 'page': 0})
+            total = (first.get('page') or {}).get('totalElements', 0)
+        except Exception:
+            total = 0
+        if total > 3000:
+            try:
+                subs = requests.get(f"https://api.ah.nl/mobile-services/v1/product-shelves/categories/{c['id']}/sub-categories", headers=H, timeout=30).json()
+                subs = subs.get('children', subs) if isinstance(subs, dict) else subs
+            except Exception:
+                subs = []
+            for sc in subs or [{'id': c['id'], 'name': c['name']}]:
+                crawl(sc['id'], sc.get('name')); time.sleep(0.2)
+        else:
+            crawl(c['id'], c.get('name'))
         time.sleep(0.3)
     stats['ah'] = len([k for k in items if k.startswith('ah|')])
 
