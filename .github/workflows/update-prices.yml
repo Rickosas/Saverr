@@ -24,6 +24,12 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Actuele aanbiedingen ophalen (AH bonus, Jumbo)
+        continue-on-error: true
+        run: |
+          pip install requests
+          python3 scripts/fetch_promos.py
+
       - name: App-data bouwen
         run: python3 scripts/build_data.py /tmp/checkjebon
 

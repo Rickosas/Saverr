@@ -65,6 +65,50 @@ def was_price(store, item):
     # >70% daling is bijna altijd een datafout bij de bron; die negeren we
     return round(m, 2) if (m and m * 0.3 <= p <= m * (1 - DROP_PCT) and m - p >= DROP_EUR) else 0
 
+# ---------------------------------------------------------------- aanbiedingen (AH bonus, Jumbo)
+PROMOS = {}
+_pf = os.path.join(OUT, 'promos.json')
+if os.path.exists(_pf):
+    _p = json.load(open(_pf, encoding='utf-8'))
+    if _p.get('updated', '') >= (datetime.date.today() - datetime.timedelta(days=8)).isoformat():
+        PROMOS = _p['items']
+TODAY = datetime.date.today().isoformat()
+
+def promo_key(store, link):
+    if store == 'ah': return 'ah|' + link.split('/')[0]
+    if store == 'jumbo': return 'jumbo|' + link.rstrip('/').rsplit('-', 1)[-1]
+    return None
+
+def _num(x): return float(x.replace(',', '.'))
+def promo_model(label, reg, now=None):
+    """Zet '1+1 gratis', '2 voor 3,49', '25% korting' ... om in (min. aantal, prijs per stuk)."""
+    l = label.lower().replace('€', ' ').replace('  ', ' ')
+    m = re.search(r'(\d+)\s*\+\s*(\d+)\s*gratis', l)
+    if m: a, b = int(m.group(1)), int(m.group(2)); return a + b, reg * a / (a + b)
+    if '2e halve prijs' in l or '50% korting op de 2e' in l: return 2, reg * 0.75
+    if '2e gratis' in l: return 2, reg / 2
+    m = re.search(r'(\d+)\s*voor\s*(\d+(?:[.,]\d{1,2})?)\b', l)
+    if m: n = int(m.group(1)); return n, _num(m.group(2)) / n
+    m = re.search(r'(\d+)\s*%\s*korting', l)
+    if m: return 1, round(now, 2) if now else reg * (1 - int(m.group(1)) / 100)
+    m = re.search(r'(\d+(?:[.,]\d{1,2})?)\s*(?:euro\s*)?korting', l)
+    if m: return 1, reg - _num(m.group(1))
+    m = re.search(r'^(?:nu\s*)?voor\s*(\d+(?:[.,]\d{1,2})?)\b', l)
+    if m: return 1, _num(m.group(1))
+    if now and now < reg: return 1, now
+    return None
+
+def promo_for(store, item):
+    k = promo_key(store, item['l'])
+    pr = PROMOS.get(k) if k else None
+    if not pr or (pr.get('t') and pr['t'] < TODAY): return 0
+    reg = item['p']
+    mod = promo_model(pr['l'], reg, pr.get('now'))
+    if not mod: return 0
+    mn, unit = mod
+    if not (0.2 * reg <= unit <= reg * 0.98): return 0
+    return [pr['l'], mn, round(unit, 2), pr.get('t') or '']
+
 # ---------------------------------------------------------------- matching
 U = {'g': 1, 'gr': 1, 'gram': 1, 'kg': 1000, 'kilo': 1000, 'ml': 1, 'milliliter': 1, 'cl': 10, 'l': 1000, 'liter': 1000, 'lt': 1000,
      'st': 1, 'stuks': 1, 'stuk': 1, 'rol': 1, 'rollen': 1, 'wasbeurten': 1, 'stk': 1}
@@ -145,7 +189,7 @@ for sp in SPECS:
         if s not in current or s in e.get('skip', []): continue
         b = best_match(spec, s)
         if b:
-            st[s] = [round(b['p'], 2), b['n'], b.get('s') or '', current[s]['u'] + b['l'], was_price(s, b)]
+            st[s] = [round(b['p'], 2), b['n'], b.get('s') or '', current[s]['u'] + b['l'], was_price(s, b), promo_for(s, b)]
     if len(st) >= 3:
         products.append(dict(id=pid, name=NAMES.get(pid, sp[1]), emoji=sp[2], cat=sp[3], st=st))
 
@@ -156,13 +200,16 @@ for i, s in enumerate(stores_present):
     for it in current[s]['d']:
         if not it.get('p') or it['p'] < 0.2 or 'lidlmini' in it['n'].lower(): continue
         w = was_price(s, it)
-        row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w]
+        pr = promo_for(s, it) if s in ('ah', 'jumbo') else 0
+        row = [i, it['n'], round(it['p'], 2), it.get('s') or '', it['l'], w, pr]
         rows.append(row)
-        if w: drops.append(row)
-drops.sort(key=lambda r: r[2] / r[5])
+        if w or pr: drops.append(row)
+def deal_ratio(r):  # lager = betere deal
+    return min(r[6][2] / r[2] if r[6] else 1, r[2] / r[5] if r[5] else 1)
+drops.sort(key=deal_ratio)
 
 os.makedirs(OUT, exist_ok=True)
-meta = dict(updated=latest_date, built=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'), stores=stores_present,
+meta = dict(promos=sum(1 for r in rows if r[6]), promos_updated=(json.load(open(_pf)).get('updated') if os.path.exists(_pf) else None), updated=latest_date, built=datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'), stores=stores_present,
             urls=[current[s]['u'] for s in stores_present], products=len(products), catalog=len(rows), drops=len(drops),
             source='Checkjebon.nl open data (MIT)')
 def dump(name, obj):
@@ -170,7 +217,7 @@ def dump(name, obj):
         json.dump(obj, f, ensure_ascii=False, separators=(',', ':'))
 dump('meta.json', meta)
 dump('products.json', dict(updated=latest_date, products=products))
-dump('drops.json', dict(updated=latest_date, stores=stores_present, urls=meta['urls'], rows=drops[:300]))
+dump('drops.json', dict(updated=latest_date, stores=stores_present, urls=meta['urls'], rows=drops[:600]))
 with gzip.open(os.path.join(OUT, 'catalog.json.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:
     json.dump(dict(stores=stores_present, urls=meta['urls'], rows=rows), f, ensure_ascii=False, separators=(',', ':'))
-print(f"{len(products)} producten gekoppeld, {len(rows)} in catalogus, {len(drops)} prijsdalingen")
+print(f"{len(products)} producten gekoppeld, {len(rows)} in catalogus, {len(drops)} deals ({meta['promos']} actuele aanbiedingen)")
