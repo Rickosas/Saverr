@@ -79,11 +79,14 @@ const pDeals = p => Object.keys(p.st).filter(sid=>was(p,sid)||promo(p,sid))
 const rowPromo = r => okPromo(r[6]);
 /* ---------- productfoto's ---------- */
 const AH_IMG = c => `https://static.ah.nl/dam/product/${c}?revLabel=1&rendition=200x200_JPG&fileType=binary`;
-const POIESZ_IMG = id => `https://images.poiesz-supermarkten.nl/artikelen/${id}.png`;
+const POIESZ_IMG = id => `https://images.poiesz-supermarkten.nl/artikelen/${id}.png?width=200`;
 function imgSrc(sid, v, link){
   if(sid==='poiesz' && (v==='P' || /^\d+$/.test(String(v)))) return POIESZ_IMG(/^\d+$/.test(String(v)) ? v : String(link||'').split('/').pop());
   if(!v || v==='P') return '';
-  return String(v).startsWith('AHI_') ? AH_IMG(v) : v;
+  v=String(v);
+  if(v.startsWith('AHI_')) return AH_IMG(v);
+  if(/web-fileserver\.(dirk|dekamarkt)\.nl/.test(v)) return v+'?width=200';   // kleine versie (origineel is soms 2 MB)
+  return v;
 }
 const productImg = p => p.img ? imgSrc(p.img[0], p.img[1]) : '';
 const rowImg = (r,src) => imgSrc(rowStore(r,src), r[7], r[4]);
