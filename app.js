@@ -85,7 +85,7 @@ function imgSrc(sid, v, link){
   if(!v || v==='P') return '';
   v=String(v);
   if(v.startsWith('AHI_')) return AH_IMG(v);
-  if(/web-fileserver\.(dirk|dekamarkt)\.nl/.test(v)) return v+'?width=200';   // kleine versie (origineel is soms 2 MB)
+  if(/web-fileserver\.(dirk|dekamarkt)\.nl/.test(v)) return v.split('?')[0]+'?width=200';   // kleine versie (origineel is soms 2 MB)
   return v;
 }
 // foto van het product bij één bepaalde winkel (nooit de foto van een andere winkel)
