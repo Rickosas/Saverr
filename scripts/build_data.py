@@ -139,7 +139,7 @@ EXTRA = {
     'spekjes': dict(ban=['plant', 'vivera', 'vega']),
     'stroop': dict(ban=['wafel', 'koek', 'stift', 'bungel']),
     'nasigroente': dict(ban=['schijven', 'speciaal', 'padifood', 'ah nasi |']),
-    'sperziebonen': dict(ban=['gebroken']),
+    'sperziebonen': dict(ban=['gebroken', 'hak ', 'pot', 'glas']),
 }
 NAMES = {'aardappelen': 'Aardappelen 3 kg', 'kipfilet': 'Kipfilet ±500g', 'spa': 'Bruisend mineraalwater 1,5L', 'zalm': 'Zalmfilet ±250g',
          'paprika': 'Paprika mix 3 st', 'hagelslag': 'Hagelslag puur', 'griekse': 'Yoghurt Griekse stijl 1kg', 'kaas': 'Jong belegen kaasplakken',
@@ -172,11 +172,14 @@ def best_match(spec, store):
         extra = [t for t in tokens(it['n']) if t not in qt and t not in BRANDS
                  and not any(t.startswith(x) or x.startswith(t) for x in qt)
                  and not re.fullmatch(r'\d+([,.]\d+)?|\d+(g|kg|ml|l|st)', t)]
-        cands.append((len(extra), it['p'], it))
+        pr = promo_for(store, it) if store in ('ah', 'jumbo') else 0
+        cands.append((len(extra), pr[2] if pr else it['p'], it, pr))
     if not cands: return None
     m = min(c[0] for c in cands)
     if m > 2: return None
-    return min((c for c in cands if c[0] == m), key=lambda c: c[1])[2]
+    # kies de goedkoopste, mét aanbiedingen; een product in de aanbieding mag één extra woord in de naam hebben (ander merk/variant)
+    pool = [c for c in cands if c[0] == m or (c[3] and c[0] <= min(m + 1, 2))]
+    return min(pool, key=lambda c: c[1])[2]
 
 products = []
 for sp in SPECS:

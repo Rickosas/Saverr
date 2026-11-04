@@ -23,31 +23,42 @@ const RECIPES = [
 ];
 
 /* normale prijs van een product = mediaan van de normale prijzen (zonder prijsdalingen) over alle winkels */
-const normalOf = p => { const v=Object.values(p.st).map(x=>Math.max(x[0],x[4]||0)).sort((a,b)=>a-b); return v[Math.floor((v.length-1)/2)]; };
+const normalOf = p => { const v=Object.keys(p.st).map(sid=>regOf(p,sid)).sort((a,b)=>a-b); return v[Math.floor((v.length-1)/2)]; };
 const recipeOK = r => r.ing.every(([id])=>P(id));
-const unitPrice = (p,sid) => has(p,sid) ? price(p,sid) : median(p);
+const unitPrice = (p,sid) => has(p,sid) ? unitEff(p,sid) : median(p);
 
 /* boodschappen voor een set recepten bij één winkel */
 function planCost(recipeIds, sid, persons){
   const k=persons/4, need={};
   recipeIds.forEach(rid=>RECIPES.find(r=>r.id===rid).ing.forEach(([id,q])=>{ need[id]=(need[id]||0)+q*k; }));
-  let total=0, normal=0, missing=0, drops=0; const items=[];
+  let total=0, normal=0, regular=0, missing=0, drops=0; const items=[];
   Object.entries(need).forEach(([id,q])=>{
-    const p=P(id), n=Math.max(1,Math.ceil(q-0.05)), up=unitPrice(p,sid), np=normalOf(p);
-    if(!has(p,sid)) missing++; if(has(p,sid)&&was(p,sid)) drops++;
-    total+=n*up; normal+=n*np; items.push({id,p,n,up,np,ok:has(p,sid),drop:has(p,sid)&&was(p,sid)>0});
+    const p=P(id), ok=has(p,sid), pr=ok&&promo(p,sid);
+    let n=Math.max(1,Math.ceil(q-0.05)); if(pr && n<pr[1] && costAt(p,sid,pr[1])<=costAt(p,sid,n)+0.001) n=pr[1];   // gratis extra pakken meenemen
+    const cost=ok?costAt(p,sid,n):n*median(p), np=normalOf(p);
+    if(!ok) missing++; if(ok&&(was(p,sid)||pr)) drops++;
+    total+=cost; normal+=n*np; regular+=ok?n*regOf(p,sid):n*median(p); items.push({id,p,n,cost,np,ok,promo:pr,drop:ok&&(was(p,sid)>0||!!pr)});
   });
   const meals = recipeIds.map(rid=>{ const r=RECIPES.find(x=>x.id===rid); return {r, cost:r.ing.reduce((t,[id,q])=>t+q*k*unitPrice(P(id),sid),0)}; });
-  return {sid,total,normal,saved:Math.max(0,normal-total),missing,drops,items:items.sort((a,b)=>b.n*b.up-a.n*a.up),meals};
+  return {sid,total,normal,regular,missing,drops,items:items.sort((a,b)=>b.cost-a.cost),meals};
 }
+/* menu bij één winkel + vergelijking met de duurste van je winkels zonder aanbiedingen */
+function evalPlan(ids, sid, persons, storeIds){
+  const c=planCost(ids,sid,persons);
+  let ref=c.regular, refSid=sid;
+  storeIds.forEach(x=>{ if(x===sid) return; const o=planCost(ids,x,persons); if(o.missing<=c.missing && o.regular>ref){ ref=o.regular; refSid=x; } });
+  c.ref=ref; c.refSid=refSid; c.saved=Math.max(0,ref-c.total); c.dealSaved=Math.max(0,c.regular-c.total); c.storeSaved=Math.max(0,ref-c.regular);
+  return c;
+}
+const planStores = f => (f.allStores||!st.myStores.length?STORES:STORES.filter(s=>st.myStores.includes(s.id))).map(s=>s.id);
 
 function makePlan({persons,budget,days,allStores}, fixed=null){
-  const pool=RECIPES.filter(recipeOK), stores=(allStores||!st.myStores.length?STORES:STORES.filter(s=>st.myStores.includes(s.id))).map(s=>s.id);
+  const pool=RECIPES.filter(recipeOK), stores=planStores({allStores});
   let best=null; const cands=[];
   const score = c => {
     const over=Math.max(0,c.total-budget);
     const mains=new Set(c.meals.map(m=>m.r.main)).size;
-    return -over*10 + c.saved + (budget-c.total) + mains - c.missing*3 + Math.random()*2;
+    return -over*10 + c.saved*1.5 + (budget-c.total) + mains - c.missing*4 + Math.random()*2;
   };
   for(let i=0;i<500;i++){
     let ids;
@@ -56,20 +67,20 @@ function makePlan({persons,budget,days,allStores}, fixed=null){
     // max 2 keer dezelfde hoofdingrediënt
     const cnt={}; if(ids.some(id=>{ const m=RECIPES.find(r=>r.id===id).main; cnt[m]=(cnt[m]||0)+1; return cnt[m]>2; })) continue;
     for(const sid of (fixed?[fixed.sid]:stores)){
-      const c=planCost(ids,sid,persons); c.score=score(c); c.ids=ids; cands.push(c);
+      const c=evalPlan(ids,sid,persons,stores); c.score=score(c); c.ids=ids; cands.push(c);
       if(!best||c.score>best.score) best=c;
     }
   }
   // kies willekeurig uit de bijna-beste menu's, zodat je elke keer iets anders krijgt
   const key=c=>[...c.ids].sort().join()+c.sid, seen=new Set();
-  const top=cands.filter(c=>c.score>=best.score-6 && !seen.has(key(c)) && seen.add(key(c)));
+  const top=cands.filter(c=>c.score>=best.score-3 && !seen.has(key(c)) && seen.add(key(c)));
   return top[Math.floor(Math.random()*top.length)] || best;
 }
 
 let planForm = null;
 function viewPlanner(){
   const f = planForm || (planForm = Object.assign({persons:4,budget:60,days:5,allStores:false}, st.planPrefs||{}));
-  const plan = st.plan && st.plan.ids ? planCost(st.plan.ids, st.plan.sid, st.plan.persons) : null;
+  const plan = st.plan && st.plan.ids ? evalPlan(st.plan.ids, st.plan.sid, st.plan.persons, planStores(st.plan)) : null;
   const start = new Date(st.plan?.created||Date.now());
   const step = (k,min,max,stepv,fmt) => `<div class="row"><div class="st">${{persons:'Aantal personen',budget:'Budget',days:'Aantal avonden'}[k]}</div>
     <button class="btn sm ghost" data-pstep="${k}|${-stepv}|${min}|${max}">−</button><b style="min-width:56px;text-align:center;font-family:'Bricolage Grotesque';font-size:17px">${fmt(f[k])}</b><button class="btn sm ghost" data-pstep="${k}|${stepv}|${min}|${max}">+</button></div>`;
@@ -91,23 +102,23 @@ function planHTML(c,start){
       <div class="emoji">${m.r.emoji}</div><div class="info"><div class="meta" style="font-weight:600;color:var(--green);text-transform:capitalize">${DAYS[d.getDay()]}</div><div class="name" style="white-space:normal">${m.r.name}</div></div>
       <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
-      <div class="brk" style="margin-top:0"><div><span>Normaal (gemiddelde supermarkt)</span><b><s style="opacity:.7">${euro(c.normal)}</s></b></div>
-        <div><span>Bij ${S(c.sid).name}${c.drops?` (${c.drops} prijsdalingen)`:''}</span><b>${euro(c.total)}</b></div></div>
+      <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
+        <div><span>Bij ${S(c.sid).name}, mét ${c.drops} aanbieding${c.drops===1?'':'en'}</span><b>${euro(c.total)}</b></div></div>
       <div style="font-size:13px;opacity:.85;margin-top:10px">💰 Bespaard</div><div class="amt">${euro(c.saved)}</div>
-      ${c.saved<1?`<div style="font-size:12.5px;opacity:.9;margin-bottom:4px">${S(c.sid).name} is voor dit menu niet goedkoper dan gemiddeld. Tip: zet bij <i>Mijn winkels</i> ook Lidl of Dirk aan, of kies "Alle supermarkten".</div>`:''}
+      ${c.saved>=0.01?`<div style="font-size:12.5px;opacity:.9;margin-bottom:4px">🏷️ ${euro(c.dealSaved)} door aanbiedingen${c.storeSaved>=0.01?` · 🏪 ${euro(c.storeSaved)} door de winkelkeuze`:''}</div>`:`<div style="font-size:12.5px;opacity:.9;margin-bottom:4px">Deze week geen extra voordeel bij je winkels. Tip: zet bij <i>Mijn winkels</i> meer supermarkten aan, of kies "Alle supermarkten".</div>`}
       <div style="font-size:12.5px;opacity:.85">${over?`⚠️ ${euro(c.total-p.budget)} boven je budget van ${euro(p.budget)}. Probeer minder avonden of een hoger budget.`:`✓ Binnen je budget van ${euro(p.budget)} (${euro(p.budget-c.total)} over)`}</div></div>
     <button class="btn green" data-act="plan2list">🛒 Zet op mijn boodschappenlijst</button>
     <h2>Boodschappen (${c.items.length})</h2>
     <div class="list">${c.items.map(it=>`<div class="item" data-open="${it.id}"><div class="emoji">${it.p.emoji}</div>
-      <div class="info"><div class="name">${it.n>1?it.n+'× ':''}${esc(it.p.name)}</div><div class="meta">${it.ok?esc(it.p.st[c.sid][1]):'Niet bij '+S(c.sid).name+' (geschat)'}</div>${it.drop?`<span class="deal-tag">🔥 Prijsdaling</span>`:''}</div>
-      <div class="price"><b>${euro(it.n*it.up)}</b>${it.np>it.up+0.005?`<s>${euro(it.n*it.np)}</s>`:''}</div></div>`).join('')}</div>
-    <p class="demo">Het totaal is voor hele verpakkingen; wat over blijft (zoals uien of ketjap) kun je later gebruiken. Zout, olie en kruiden heb je meestal al in huis. "Normaal" = wat deze boodschappen gemiddeld kosten bij de supermarkten, zonder prijsdalingen.</p>`;
+      <div class="info"><div class="name">${it.n>1?it.n+'× ':''}${esc(it.p.name)}</div><div class="meta">${it.ok?esc(it.p.st[c.sid][1]):'Niet bij '+S(c.sid).name+' (geschat)'}</div>${it.promo?`<span class="deal-tag">🏷️ ${esc(it.promo[0])}</span>`:it.drop?`<span class="deal-tag">🔥 Prijsdaling</span>`:''}</div>
+      <div class="price"><b>${euro(it.cost)}</b>${it.ok&&it.n*regOf(it.p,c.sid)>it.cost+0.005?`<s>${euro(it.n*regOf(it.p,c.sid))}</s>`:''}</div></div>`).join('')}</div>
+    <p class="demo">Het totaal is voor hele verpakkingen; wat over blijft (zoals uien of ketjap) kun je later gebruiken. Zout, olie en kruiden heb je meestal al in huis. "Zonder slim kiezen" = hetzelfde menu bij de duurste van je gekozen winkels, zonder aanbiedingen. Aanbiedingen zoals 1+1 gratis zijn al meegerekend.</p>`;
 }
 function doPlan(swapIndex=null){
   const f=planForm; st.planPrefs={...f};
-  const c = swapIndex==null ? makePlan(f) : makePlan({...f,persons:st.plan.persons,budget:st.plan.budget,days:st.plan.ids.length}, {ids:st.plan.ids, swap:swapIndex, sid:st.plan.sid});
+  const c = swapIndex==null ? makePlan(f) : makePlan({...f,persons:st.plan.persons,budget:st.plan.budget,days:st.plan.ids.length,allStores:st.plan.allStores}, {ids:st.plan.ids, swap:swapIndex, sid:st.plan.sid});
   if(!c) return push('Er kon geen weekmenu gemaakt worden.');
-  st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,created:swapIndex==null?Date.now():st.plan.created};
+  st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,allStores:swapIndex==null?f.allStores:st.plan.allStores,created:swapIndex==null?Date.now():st.plan.created};
   if(swapIndex==null && st.planPts!==WEEK){ st.planPts=WEEK; addPoints(20,'Weekmenu gemaakt'); push(`✨ Weekmenu klaar: ${euro(c.saved)} bespaard! +20 punten.`); }
   save(); render();
 }
