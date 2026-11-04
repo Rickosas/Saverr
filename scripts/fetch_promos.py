@@ -39,7 +39,9 @@ def fetch_ah():
             mech = (p.get('bonusMechanism') or '').strip()
             end = p.get('bonusEndDate')
             # alleen echte (week)acties: geen permanente volumevoordelen of acties die "tot 2999" lopen
+            start = p.get('bonusStartDate')
             if not mech or not p.get('webshopId') or SKIP.search(mech) or (end and end > horizon): continue
+            if start and start > datetime.date.today().isoformat(): continue      # bonus van volgende week nog niet meetellen
             items[f"ah|wi{p['webshopId']}"] = dict(l=mech, t=end, now=p.get('currentPrice'), reg=p.get('priceBeforeBonus'), name=p.get('title'))
     def search(params):
         r = requests.get('https://api.ah.nl/mobile-services/product/search/v2', params=params, headers=H, timeout=30)

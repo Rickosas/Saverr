@@ -246,7 +246,7 @@ def dump(name, obj):
         json.dump(obj, f, ensure_ascii=False, separators=(',', ':'))
 dump('meta.json', meta)
 dump('products.json', dict(updated=latest_date, products=products))
-dump('drops.json', dict(updated=latest_date, stores=stores_present, urls=meta['urls'], rows=drops[:600]))
+dump('drops.json', dict(updated=latest_date, stores=stores_present, urls=meta['urls'], rows=drops[:1000]))
 with gzip.open(os.path.join(OUT, 'catalog.json.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:
     json.dump(dict(stores=stores_present, urls=meta['urls'], rows=rows), f, ensure_ascii=False, separators=(',', ':'))
 print(f"{len(products)} producten gekoppeld, {len(rows)} in catalogus, {len(drops)} deals ({meta['promos']} actuele aanbiedingen)")
