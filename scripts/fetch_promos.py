@@ -93,14 +93,21 @@ def euro_txt(x): return f'{x:.2f}'.replace('.', ',')
 def fetch_dirk():
     t = requests.get('https://www.dirk.nl/aanbiedingen', headers=UA_WEB, timeout=30).text
     arr = json.loads(re.search(r'id="__NUXT_DATA__"[^>]*>(.*?)</script>', t, re.S).group(1))
-    def res(i, depth=0):
-        if depth > 40: return None
-        v = arr[i] if isinstance(i, int) else i
+    memo, busy = {}, set()
+    def res(i):
+        # Nuxt-payload: getallen verwijzen naar andere plekken in de lijst; elk item maar één keer uitpakken
+        if not isinstance(i, int) or isinstance(i, bool): return i
+        if i in memo: return memo[i]
+        if i in busy or i < 0 or i >= len(arr): return None
+        busy.add(i); v = arr[i]
         if isinstance(v, list):
-            if v and v[0] in ('ShallowReactive', 'Reactive', 'Ref', 'ShallowRef'): return res(v[1], depth + 1)
-            return [res(x, depth + 1) for x in v]
-        if isinstance(v, dict): return {k: res(x, depth + 1) for k, x in v.items()}
-        return v
+            out = res(v[1]) if (v and v[0] in ('ShallowReactive', 'Reactive', 'Ref', 'ShallowRef')) else [res(x) for x in v]
+        elif isinstance(v, dict):
+            out = {k: res(x) for k, x in v.items()}
+        else:
+            out = v
+        busy.discard(i); memo[i] = out
+        return out
     groups = res(0)['data']['offers-currentOffers']
     n = 0
     for g in groups or []:
