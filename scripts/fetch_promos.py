@@ -13,6 +13,18 @@ Gaat er iets mis, dan blijft het vorige bestand staan en werkt de app gewoon ver
 import datetime, html, json, os, re, sys, time
 import requests
 
+_get = requests.get
+def get_retry(*a, **kw):
+    """requests.get met 3 pogingen (sites zijn soms even traag)"""
+    kw['timeout'] = max(kw.get('timeout', 30), 45)
+    for i in range(3):
+        try:
+            return _get(*a, **kw)
+        except requests.RequestException:
+            if i == 2: raise
+            time.sleep(5 * (i + 1))
+requests.get = get_retry
+
 sys.path.insert(0, os.path.dirname(__file__))
 from specs import SPECS  # noqa: E402
 
@@ -276,6 +288,17 @@ for name, fn in (('Albert Heijn', fetch_ah), ('Jumbo', fetch_jumbo), ('Dirk', fe
     except Exception as e:
         print(f'{name}: ophalen mislukt ({e})')
 
+# winkels die vandaag mislukten: acties van de vorige keer gebruiken (verlopen acties vallen er in build_data vanzelf af)
+try:
+    prev = json.load(open(OUT, encoding='utf-8'))
+except Exception:
+    prev = {}
+for prefix in ('ah|', 'jumbo|', 'dirk|', 'dirkname|', 'dekamarkt|', 'dekamarktname|', 'poiesz|', 'lidlname|'):
+    if not any(k.startswith(prefix) for k in items):
+        old = {k: v for k, v in (prev.get('items') or {}).items() if k.startswith(prefix)}
+        if old: items.update(old); print('vorige acties gebruikt voor', prefix.rstrip('|'))
+if not ALDI and prev.get('aldi'):
+    ALDI.extend(prev['aldi']); print('vorige acties gebruikt voor aldi')
 if not items:
     print('Geen aanbiedingen opgehaald; vorig bestand blijft staan.')
     sys.exit(0)
