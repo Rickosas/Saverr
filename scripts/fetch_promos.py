@@ -94,7 +94,7 @@ def fetch_dirk():
     t = requests.get('https://www.dirk.nl/aanbiedingen', headers=UA_WEB, timeout=30).text
     arr = json.loads(re.search(r'id="__NUXT_DATA__"[^>]*>(.*?)</script>', t, re.S).group(1))
     def res(i, depth=0):
-        if depth > 14: return None
+        if depth > 40: return None
         v = arr[i] if isinstance(i, int) else i
         if isinstance(v, list):
             if v and v[0] in ('ShallowReactive', 'Reactive', 'Ref', 'ShallowRef'): return res(v[1], depth + 1)
@@ -103,11 +103,14 @@ def fetch_dirk():
         return v
     groups = res(0)['data']['offers-currentOffers']
     n = 0
-    for g in groups:
+    for g in groups or []:
+        if not isinstance(g, dict): continue
         for o in g.get('currentOffers') or []:
+            if not isinstance(o, dict): continue
             weekend = 'VR, ZA' in (o.get('textPriceSign') or '')
             end = (o.get('endDate') or '')[:10] or None
             for pr in o.get('products') or []:
+                if not isinstance(pr, dict): continue
                 price = pr.get('offerPrice') or o.get('offerPrice')
                 if not pr.get('productId') or not price: continue
                 label = ('Weekendactie ' if weekend else 'Actie ') + '€' + euro_txt(price)
