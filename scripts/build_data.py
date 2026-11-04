@@ -82,7 +82,11 @@ def promo_key(store, item):
     link = item['l']
     if store == 'ah': return 'ah|' + link.split('/')[0]
     if store == 'jumbo': return 'jumbo|' + link.rstrip('/').rsplit('-', 1)[-1]
-    if store in ('dirk', 'dekamarkt', 'poiesz'): return store + '|' + link.rstrip('/').rsplit('/', 1)[-1]
+    if store in ('dirk', 'dekamarkt', 'poiesz'):
+        k = store + '|' + link.rstrip('/').rsplit('/', 1)[-1]
+        if k in PROMOS: return k
+        k = store + 'name|' + lidl_norm(item['n'])          # anders op exacte productnaam
+        return k if k in PROMOS else None
     if store == 'lidl':
         k = 'lidlname|' + lidl_norm(item['n'])   # alleen een exact gelijke productnaam
         return k if k in PROMOS else None

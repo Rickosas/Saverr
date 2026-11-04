@@ -22,6 +22,11 @@ UA_WEB = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/5
 items = {}
 stats = {}
 
+def lidl_norm(s):
+    s = re.sub(r'^[-\s]+', '', (s or '').lower())
+    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9%+ ]', ' ', s)).strip()
+
+
 # ------------------------------------------------------------------ Albert Heijn
 def fetch_ah():
     H = {'x-application': 'AHWEBSHOP', 'user-agent': 'Appie/8.22.3 Model/phone Android/13', 'content-type': 'application/json; charset=UTF-8'}
@@ -139,6 +144,9 @@ def fetch_detailresult(store, url):
                 items[f"{store}|{pr['productId']}"] = dict(l=label, t=end, unit=price, reg=pr.get('normalPrice') or None, name=o.get('headerText'))
             else:
                 continue
+            # ook op productnaam opslaan (DekaMarkt gebruikt op de site andere nummers dan in de prijsdata)
+            nm = ((pr.get('productInformation') or {}).get('headerText') or '')
+            if nm: items[f"{store}name|{lidl_norm(nm)}"] = items[f"{store}|{pr['productId']}"]
             n += 1
     stats[store] = n
 
@@ -196,10 +204,6 @@ def fetch_aldi():
     stats['aldi'] = len(ALDI)
 
 # ------------------------------------------------------------------ Lidl
-def lidl_norm(s):
-    s = re.sub(r'^[-\s]+', '', (s or '').lower())
-    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9%+ ]', ' ', s)).strip()
-
 def fetch_lidl():
     t = requests.get('https://www.lidl.nl/c/eten-en-drinken/s10068374', headers=UA_WEB, timeout=30).text
     n = 0
