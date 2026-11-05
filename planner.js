@@ -220,12 +220,16 @@ function viewPlanner(){
     <button class="btn green" data-act="mkplan">${plan?'🔄 Maak een nieuw weekmenu':'✨ Maak mijn weekmenu'}</button>
     ${plan?planHTML(plan,start):''}`;
 }
+const dayLabel = d => { const t=new Date(); t.setHours(0,0,0,0); const x=new Date(d); x.setHours(0,0,0,0); const diff=Math.round((x-t)/864e5);
+  const name = diff===0?'Vandaag':diff===1?'Morgen':DAYS[d.getDay()].replace(/^./,c=>c.toUpperCase());
+  return `${name} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`; };
+const past = d => { const t=new Date(); t.setHours(0,0,0,0); const x=new Date(d); x.setHours(0,0,0,0); return x<t; };
 function planHTML(c,start){
   const p=st.plan, over=c.total>p.budget+0.005;
   return `<h2>🍝 Jouw weekmenu</h2>
     <p class="hint">${p.persons} personen · ${p.ids.length} avonden${p.cheat?' (incl. 🍔 cheatday)':''} · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
     <div class="list">${c.meals.map((m,i)=>{const d=new Date(start); d.setDate(d.getDate()+i); return `<div class="item static">
-      <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${m.r.cheat?'var(--deal)':'var(--green)'};text-transform:capitalize">${DAYS[d.getDay()]}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${macros(m.r).kcal} kcal · ${macros(m.r).eiwit} g eiwit · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
+      <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${past(d)?'var(--muted)':m.r.cheat?'var(--deal)':'var(--green)'}">${dayLabel(d)}${past(d)?' · geweest':''}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${macros(m.r).kcal} kcal · ${macros(m.r).eiwit} g eiwit · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
       <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
       <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
