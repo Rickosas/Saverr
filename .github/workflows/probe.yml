@@ -11,5 +11,6 @@ jobs:
       - run: python3 scripts/probe_promos.py
       - run: |
           git config user.name saverr-bot; git config user.email saverr-bot@users.noreply.github.com
-          git checkout -b fotokeuze
-          git add kandidaten && git commit -qm "kandidaat-foto's" && git push -f origin fotokeuze
+          git fetch origin fotokeuze && git checkout -b fk origin/fotokeuze -- 2>/dev/null || git checkout -b fk
+          git checkout fk; git checkout origin/fotokeuze -- kandidaten 2>/dev/null || true
+          git add kandidaten && git commit -qm "kandidaat-foto's 2" && git push origin fk:fotokeuze
