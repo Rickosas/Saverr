@@ -95,11 +95,51 @@ const RECIPES = [
   {id:'cheat-friet', cheat:true, name:'Friet met gehaktballen', emoji:'🍟', main:'cheat', time:30, tags:['🍔 cheatday','😋 comfortfood'],
    ing:[['friet',1,1000,'g','diepvriesfriet'],['gehakt',1,500,'g','rundergehakt'],['uien',.1,1,'st','ui, fijngesnipperd']],
    steps:['Bak de friet in de oven of airfryer volgens de verpakking.','Kneed het gehakt met de ui, zout en peper en draai er balletjes van.','Bak de balletjes in 10–12 minuten rondom bruin en gaar. Mayo erbij? Het is cheatday!']},
+  {id:'cheat-burger', cheat:true, name:'Smashburgers met cheddar en friet', emoji:'🍔', main:'cheat', time:30, tags:['🍔 cheatday','🔥 crispy'],
+   ing:[['gehakt',1,500,'g','rundergehakt'],['hamburgerbroodjes',1,4,'st','hamburgerbroodjes'],['cheddar',.5,4,'plak','cheddar'],['uien',.15,1,'st','ui, in ringen'],
+        ['ijsbergsla',.25,.25,'st','ijsbergsla'],['tomaten',.4,2,'st','tomaten, in plakken'],['friet',1,1000,'g','diepvriesfriet']],
+   steps:['Bak de friet in de oven of airfryer volgens de verpakking.','Draai 8 balletjes van het gehakt (± 60 g) en bestrooi met zout en peper.',
+          'Leg ze in een gloeiend hete pan en druk ze met een spatel plat (smash!). Bak 2 minuten tot er een knapperig korstje is, draai om en leg er cheddar op.',
+          'Rooster de broodjes kort. Stapel 2 burgers per broodje met sla, tomaat en ui. Saus naar keuze, het is cheatday!']},
+  {id:'cheat-kapsalon', cheat:true, name:'Kapsalon', emoji:'🥙', main:'cheat', time:25, tags:['🍔 cheatday','🇳🇱 Rotterdams'],
+   ing:[['friet',.75,750,'g','diepvriesfriet'],['kipshoarma',1.25,500,'g','kipshoarma'],['kaas-geraspt',1,150,'g','geraspte kaas'],['ijsbergsla',.5,.5,'st','ijsbergsla'],
+        ['tomaten',.5,250,'g','tomaten'],['komkommer',.5,.5,'st','komkommer'],['knoflooksaus',1,150,'g','knoflooksaus']],
+   steps:['Bak de friet goudbruin. Verwarm de grill van de oven voor.','Bak de shoarma 6–8 minuten in een hete pan.',
+          'Verdeel de friet over een ovenschaal (of 4 bakjes), leg de shoarma erop en strooi de kaas erover. Gratineer 3–4 minuten onder de grill.',
+          'Maak af met sla, tomaat en komkommer en een flinke scheut knoflooksaus.']},
+  {id:'cheat-nachos', cheat:true, name:"Loaded nacho's uit de oven", emoji:'🧀', main:'cheat', time:25, tags:['🍔 cheatday','🎉 om te delen'],
+   ing:[['tortillachips',2,400,'g','tortillachips naturel'],['gehakt',.8,400,'g','rundergehakt'],['kidneybonen',1,1,'blik','kidneybonen'],['mais',1,1,'blik','maïs'],
+        ['kaas-geraspt',1,150,'g','geraspte kaas'],['tomaten',.5,250,'g','tomaten, in blokjes'],['paprika',.33,1,'st','paprika'],['griekse',.15,150,'g','Griekse yoghurt (als zure room)']],
+   steps:['Verwarm de oven voor op 200 °C.','Bak het gehakt rul met 1 tl paprikapoeder en 1 tl komijn. Roer de bonen en maïs erdoor.',
+          'Leg de chips op een bakplaat, schep het gehaktmengsel erover en strooi de kaas erop. Bak 8 minuten tot de kaas gesmolten is.',
+          'Top met tomaat, paprika en een lepel yoghurt. Direct uit de pan eten!']},
+  {id:'cheat-macncheese', cheat:true, name:'Mac & cheese met spekjes', emoji:'🧀', main:'cheat', time:30, tags:['🍔 cheatday','😋 comfortfood'],
+   ing:[['macaroni',1,500,'g','macaroni'],['spekjes',1,175,'g','spekblokjes'],['melk',.5,500,'ml','melk'],['kaas-geraspt',2,300,'g','geraspte kaas'],['paneermeel',.33,50,'g','paneermeel']],
+   steps:['Kook de macaroni beetgaar en verwarm de oven voor op 200 °C.','Bak de spekjes uit in een droge pan.',
+          'Smelt 30 g boter, roer er 2 el bloem door en voeg al roerend de melk toe tot een gladde saus. Roer er 2/3 van de kaas door.',
+          'Meng saus, macaroni en spekjes in een ovenschaal, strooi de rest van de kaas en het paneermeel erover en bak 15 minuten tot goudbruin.']},
+  {id:'cheat-lasagne', cheat:true, name:'Huisgemaakte lasagne', emoji:'🍝', main:'cheat', time:60, tags:['🍔 cheatday','🇮🇹 Italiaans'],
+   ing:[['lasagnebladen',1,250,'g','lasagnebladen'],['gehakt',1,500,'g','rundergehakt'],['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],
+        ['tomatenblokjes',2,2,'blik','tomatenblokjes'],['melk',.5,500,'ml','melk'],['kaas-geraspt',1,150,'g','geraspte kaas']],
+   steps:['Bak het gehakt rul met ui en knoflook, voeg de tomatenblokjes en Italiaanse kruiden toe en laat 15 minuten pruttelen.',
+          'Maak een witte saus: smelt 40 g boter, roer er 3 el bloem door en voeg al roerend de melk toe.',
+          'Verwarm de oven voor op 190 °C. Maak laagjes in een ovenschaal: gehaktsaus, lasagnebladen, witte saus. Herhaal en eindig met witte saus.',
+          'Strooi de kaas erover en bak 35 minuten. Laat 5 minuten rusten voor het aansnijden.']},
+  {id:'cheat-nuggets', cheat:true, name:'Krokante kipnuggets met friet', emoji:'🍗', main:'cheat', time:35, tags:['🍔 cheatday','👨‍👩‍👧 kids-favoriet'],
+   ing:[['kipfilet',1,500,'g','kipfilet'],['paneermeel',1,150,'g','paneermeel'],['eieren',.2,2,'st','eieren'],['friet',1,1000,'g','diepvriesfriet']],
+   steps:['Snijd de kip in stukjes van een paar centimeter en bestrooi met zout, peper en paprikapoeder.','Haal de stukjes eerst door het losgeklopte ei en dan door het paneermeel.',
+          'Bak de nuggets in een laagje olie 3–4 minuten per kant goudbruin (of 12 minuten in de airfryer op 200 °C).','Bak ondertussen de friet. Dippen in je favoriete saus!']},
+  {id:'cheat-shoarma', cheat:true, name:'Shoarma-wraps met knoflooksaus', emoji:'🌯', main:'cheat', time:20, tags:['🍔 cheatday','⚡ snel'],
+   ing:[['wraps',1,8,'st','tortillawraps'],['kipshoarma',1.25,500,'g','kipshoarma'],['ijsbergsla',.5,.5,'st','ijsbergsla'],['tomaten',.5,250,'g','tomaten'],
+        ['uien',.1,1,'st','rode ui'],['knoflooksaus',1,150,'g','knoflooksaus']],
+   steps:['Bak de shoarma 6–8 minuten in een hete pan.','Snijd sla, tomaat en ui.','Verwarm de wraps kort in een droge pan.',
+          'Beleg de wraps met sla, shoarma, tomaat en ui, schep er knoflooksaus over en rol ze op.']},
+
 ];
 const HEALTHY = () => RECIPES.filter(r=>!r.cheat && recipeOK(r));
 const CHEATS = () => RECIPES.filter(r=>r.cheat && recipeOK(r));
 /* foto's: Wikimedia Commons (vrije licenties), verkleind in /recipes */
-const RECIPE_PHOTOS = {"kipcurry": {"a": "pelican from Tokyo, Japan", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_spinach_curry_(424955518).jpg"}, "kippasta": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Ravioli_with_mushrooms_and_spinach_in_cream_sauce.jpg"}, "chili": {"a": "Carstor", "l": "CC BY-SA 2.5", "u": "https://commons.wikimedia.org/wiki/File:Bowl_of_chili.jpg"}, "wok": {"a": "Ginny", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Ginger_chicken_(3168342551).jpg"}, "paprikavul": {"a": "Mark Bonica", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Quinoa_stuffed_peppers.jpg"}, "kipsperzie": {"a": "Daderot", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Potatoes,_chicken_breast,_and_green_beans,_peas,_and_asparagus_-_Boston,_MA.jpg"}, "couscouskip": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Algerian_couscous_with_vegetable_soup_and_chicken.jpg"}, "zalmoven": {"a": "Famartin", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2022-01-29_20_53_20_Blackened_Cajun_Salmon_(6_oz._blackened_and_grilled_salmon_fillet_with_garlic_mashed_potatoes_and_steamed_broccoli)_at_the_Applebee%27s_in_Fair_Lakes,_Fairfax_County,_Virginia.jpg"}, "koolvis": {"a": "Nonepse", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Lohikeitto_dish.jpg"}, "bolognesegroente": {"a": "Matěj Baťha", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Penne_Bolognese_(Tesco).jpg"}, "nasigroente": {"a": "Supardisahabu", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Nasi_Goreng_Kampung.jpg"}, "zalmspinazie": {"a": "PattayaPatrol", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:DSCF0412_Seared_salmon_fillet_topped_with_saut%C3%A9ed_shrimp_served_with_creamed_spinach_and_a_side_salad.jpg"}, "wrapskip": {"a": "Luca Nebuloni from Milan, Italy", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_roll_with_vegetables_%26_goat_cheese_(5742199145).jpg"}, "hutspotbal": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_0330_Hutspot_karbonade.jpg"}, "zoeteovenschotel": {"a": "Alikiiaa", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Sweet_Potato_Sauteed_With_Honey.jpg"}, "cheat-pizza": {"a": "Mario56", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Margherita_Originale.JPG"}, "cheat-pannenkoek": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_01_Spekpannenkoek.jpg"}, "cheat-friet": {"a": "Neil Conway from Oakland, USA", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Sunday_morning_meatballs_and_shopping._(7481070476).jpg"}};
+const RECIPE_PHOTOS = {"kipcurry": {"a": "pelican from Tokyo, Japan", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_spinach_curry_(424955518).jpg"}, "kippasta": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Ravioli_with_mushrooms_and_spinach_in_cream_sauce.jpg"}, "chili": {"a": "Carstor", "l": "CC BY-SA 2.5", "u": "https://commons.wikimedia.org/wiki/File:Bowl_of_chili.jpg"}, "wok": {"a": "Ginny", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Ginger_chicken_(3168342551).jpg"}, "paprikavul": {"a": "Mark Bonica", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Quinoa_stuffed_peppers.jpg"}, "kipsperzie": {"a": "Daderot", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Potatoes,_chicken_breast,_and_green_beans,_peas,_and_asparagus_-_Boston,_MA.jpg"}, "couscouskip": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Algerian_couscous_with_vegetable_soup_and_chicken.jpg"}, "zalmoven": {"a": "Famartin", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2022-01-29_20_53_20_Blackened_Cajun_Salmon_(6_oz._blackened_and_grilled_salmon_fillet_with_garlic_mashed_potatoes_and_steamed_broccoli)_at_the_Applebee%27s_in_Fair_Lakes,_Fairfax_County,_Virginia.jpg"}, "koolvis": {"a": "Nonepse", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Lohikeitto_dish.jpg"}, "bolognesegroente": {"a": "Matěj Baťha", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Penne_Bolognese_(Tesco).jpg"}, "nasigroente": {"a": "Supardisahabu", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Nasi_Goreng_Kampung.jpg"}, "zalmspinazie": {"a": "PattayaPatrol", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:DSCF0412_Seared_salmon_fillet_topped_with_saut%C3%A9ed_shrimp_served_with_creamed_spinach_and_a_side_salad.jpg"}, "wrapskip": {"a": "Luca Nebuloni from Milan, Italy", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_roll_with_vegetables_%26_goat_cheese_(5742199145).jpg"}, "hutspotbal": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_0330_Hutspot_karbonade.jpg"}, "zoeteovenschotel": {"a": "Alikiiaa", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Sweet_Potato_Sauteed_With_Honey.jpg"}, "cheat-pizza": {"a": "Mario56", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Margherita_Originale.JPG"}, "cheat-pannenkoek": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_01_Spekpannenkoek.jpg"}, "cheat-friet": {"a": "Neil Conway from Oakland, USA", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Sunday_morning_meatballs_and_shopping._(7481070476).jpg"}, "cheat-burger": {"a": "Kyethepie21", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Burger_Chips_and_a_Coke.jpg"}, "cheat-kapsalon": {"a": "MartinD", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Kapsalon_Amstelveen.jpg"}, "cheat-nachos": {"a": "Missvain", "l": "CC BY 4.0", "u": "https://commons.wikimedia.org/wiki/File:Nachos_at_Maya_Restaurant_-_2021-10-03_-_Sarah_Stierch.jpg"}, "cheat-macncheese": {"a": "Michael Rivera", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Dave_%26_Buster%27s_Marietta_mac_and_cheese.JPG"}, "cheat-lasagne": {"a": "Wheeler Cowperthwaite", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Eggplant_Lasagna_(Vegitarian)_(2_of_6).jpg"}, "cheat-nuggets": {"a": "Horacio Cambeiro", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Papas_fritas_caseras_y_nuggets_de_pollo_en_platos_con_papel_madera.jpg"}, "cheat-shoarma": {"a": "Andy Li", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Handmade_Chicken_Shawarma_Wrap_-_Lavash.jpg"}};
 const recipePhoto = id => RECIPE_PHOTOS[id] ? `recipes/${id}.jpg` : '';
 
 /* normale prijs van een product = mediaan van de normale prijzen (zonder prijsdalingen) over alle winkels */
@@ -134,6 +174,8 @@ const planStores = f => { const mine=CMP_STORES.filter(s=>st.myStores.includes(s
 
 function makePlan({persons,budget,days,allStores}, fixed=null){
   const pool=HEALTHY(), cheats=CHEATS(), stores=planStores({allStores}), cheat=arguments[0].cheat && cheats.length;
+  // cheatday: één keer willekeurig kiezen (niet op prijs), zodat je elke keer verrast wordt
+  const cheatId = cheat ? cheats[Math.floor(Math.random()*cheats.length)].id : null;
   let best=null; const cands=[];
   const score = c => {
     const over=Math.max(0,c.total-budget);
@@ -144,7 +186,7 @@ function makePlan({persons,budget,days,allStores}, fixed=null){
     let ids;
     if(fixed){ ids=[...fixed.ids]; const isCheat=RECIPES.find(r=>r.id===ids[fixed.swap]).cheat;
       const choices=(isCheat?cheats:pool).filter(r=>!ids.includes(r.id)); if(!choices.length) break; ids[fixed.swap]=choices[Math.floor(Math.random()*choices.length)].id; }
-    else { const sh=[...pool].sort(()=>Math.random()-.5); ids=sh.slice(0,days).map(r=>r.id); if(cheat) ids.push(cheats[Math.floor(Math.random()*cheats.length)].id); }
+    else { const sh=[...pool].sort(()=>Math.random()-.5); ids=sh.slice(0,days).map(r=>r.id); if(cheatId) ids.push(cheatId); }
     // max 2 keer dezelfde hoofdingrediënt
     const cnt={}; if(ids.some(id=>{ const m=RECIPES.find(r=>r.id===id).main; cnt[m]=(cnt[m]||0)+1; return m!=='cheat' && cnt[m]>2; })) continue;
     for(const sid of (fixed?[fixed.sid]:stores)){
@@ -211,11 +253,11 @@ function doPlan(swapIndex=null){
 function fmtQty(amount, unit, k){
   let v = amount*k;
   if(unit==='g'||unit==='ml') v = v>=100 ? Math.round(v/25)*25 : Math.round(v/5)*5;
-  else if(unit==='el') v = Math.max(1, Math.round(v));
+  else if(unit==='el'||unit==='plak') v = Math.max(1, Math.round(v));
   else v = Math.max(0.5, Math.round(v*2)/2);
   if(unit==='g' && v>=1000){ return (Math.round(v/100)/10).toString().replace('.',',')+' kg'; }
   const n = String(v).replace('.5','½').replace(/^0½$/,'½');
-  const u = {st:'', teen: v>1?'tenen':'teen', blik: v>1?'blikken':'blik', blikje: v>1?'blikjes':'blikje', el:'el', g:'g', ml:'ml'}[unit] ?? unit;
+  const u = {st:'', teen: v>1?'tenen':'teen', blik: v>1?'blikken':'blik', blikje: v>1?'blikjes':'blikje', plak: v>1?'plakken':'plak', el:'el', g:'g', ml:'ml'}[unit] ?? unit;
   return `${n}${u?' '+u:''}`.replace('½ ',' ½ ').trim();
 }
 function openRecipe(rid){
