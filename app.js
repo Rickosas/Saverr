@@ -25,7 +25,7 @@ const SYN = {melk:'melk',halfvolle:'melk','volle melk':'volle-melk',yoghurt:'yog
   toiletpapier:'wc-papier',afwasmiddel:'afwasmiddel',tandpasta:'tandpasta'};
 const MONTHS = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 const DAYS = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
-const REWARDS = [{pts:100,eur:1},{pts:500,eur:5},{pts:1000,eur:10}];
+const REWARDS = [{pts:1000,eur:1},{pts:5000,eur:5},{pts:10000,eur:10}];
 const EARN = [['🏷️','Aanbieding gebruiken (Gekocht)','+10'],['🛒','Boodschappenlijst vergelijken','+20 per week'],
   ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+10 tot +50'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
 
