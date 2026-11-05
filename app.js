@@ -27,7 +27,7 @@ const MONTHS = ['januari','februari','maart','april','mei','juni','juli','august
 const DAYS = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const REWARDS = [{pts:100,eur:1},{pts:500,eur:5},{pts:1000,eur:10}];
 const EARN = [['🏷️','Aanbieding gebruiken (Gekocht)','+10'],['🛒','Boodschappenlijst vergelijken','+20 per week'],
-  ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+100 tot +500'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
+  ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+10 tot +50'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
 
 /* ================= opslag op je telefoon ================= */
 const KEY = 'saverr_beta_v1';
@@ -183,14 +183,15 @@ if(!st.activeWeeks.includes(WEEK)){ if(st.activeWeeks.length) addPoints(50,`Acti
 function streak(){ let n=0; const d=new Date(); for(let i=0;i<60;i++){ const w=isoWeek(d); if(st.purchases.some(x=>weekOf(x.date)===w)) n++; else if(i>0) break; d.setDate(d.getDate()-7);} return n; }
 
 function challenges(){
+  if(!st.claimedOnce){ st.claimedOnce=[...new Set(Object.values(st.claimed||{}).flat().filter(id=>id==='c3'||id==='c4'))]; }
   const b=buysWeek(), cl=st.claimed[WEEK]||[];
   return [
-    {id:'c1',ic:'🎯',t:'7 dagen boodschappen besparen',d:'Gebruik deze week minimaal 5 prijsdalingen.',pts:500,cur:b.length,goal:5},
-    {id:'c2',ic:'🥦',t:'Groene week',d:'Koop deze week 5 producten uit groente & fruit met korting.',pts:300,cur:b.filter(x=>x.cat==='Groente & fruit').length,goal:5},
-    {id:'c3',ic:'🔔',t:'Prijsjager',d:'Stel voor 3 producten een prijsalarm in.',pts:150,cur:Object.keys(st.targets).length,goal:3},
-    {id:'c4',ic:'⭐',t:'Ken je klassiekers',d:'Zet minimaal 8 producten in je favorieten.',pts:100,cur:st.favs.length+Object.keys(st.cfavs).length,goal:8},
-    {id:'c5',ic:'🛒',t:'Slim plannen',d:'Vergelijk deze week je boodschappenlijstje.',pts:100,cur:st.listPts===WEEK?1:0,goal:1},
-  ].map(c=>({...c,cur:Math.min(c.cur,c.goal),done:c.cur>=c.goal,claimed:cl.includes(c.id)}));
+    {id:'c1',ic:'🎯',t:'7 dagen boodschappen besparen',d:'Gebruik deze week minimaal 5 prijsdalingen.',pts:50,cur:b.length,goal:5},
+    {id:'c2',ic:'🥦',t:'Groene week',d:'Koop deze week 5 producten uit groente & fruit met korting.',pts:30,cur:b.filter(x=>x.cat==='Groente & fruit').length,goal:5},
+    {id:'c3',ic:'🔔',t:'Prijsjager',d:'Stel voor 3 producten een prijsalarm in.',pts:15,once:true,cur:Object.keys(st.targets).length,goal:3},
+    {id:'c4',ic:'⭐',t:'Ken je klassiekers',d:'Zet minimaal 8 producten in je favorieten.',pts:10,once:true,cur:st.favs.length+Object.keys(st.cfavs).length,goal:8},
+    {id:'c5',ic:'🛒',t:'Slim plannen',d:'Vergelijk deze week je boodschappenlijstje.',pts:10,cur:st.listPts===WEEK?1:0,goal:1},
+  ].map(c=>({...c,cur:Math.min(c.cur,c.goal),done:c.cur>=c.goal,claimed:cl.includes(c.id)||(c.once&&(st.claimedOnce||[]).includes(c.id))}));
 }
 
 /* ================= lijstje ================= */
@@ -292,9 +293,17 @@ function viewBrowse(){
   const seg=`<div class="seg"><button class="${bmode==='cmp'?'on':''}" data-bmode="cmp">⚖️ Vergeleken</button><button class="${bmode==='drops'?'on':''}" data-bmode="drops">🔥 Aanbiedingen</button><button class="${bmode==='all'?'on':''}" data-bmode="all">🗂️ Alles</button></div>`;
   if(bmode==='all') return seg+viewCatalog();
   if(bmode==='drops'){
+    const one = dropFilter!=='mine' && dropFilter!=='all' ? dropFilter : null;
+    const chips=`<div class="chips"><button class="chip ${one?'on':''}" data-act="pickstore">${one?`<span class="dotc" style="background:${S(one).color};display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:1px"></span>${S(one).name}`:'🏪 Kies supermarkt'} ▾</button><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">📍 Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>`;
+    if(one){
+      if(!catalog){ loadCatalog(); return seg+chips+`<div class="empty"><div class="big">⏳</div>Aanbiedingen van ${S(one).name} laden…</div>`; }
+      const rows=storeOffers(one).filter(r=>!query||r[8].includes(query));
+      return seg+chips+`<p class="hint"><b>${rows.length}</b> aanbiedingen en prijsdalingen bij <b>${S(one).name}</b>, grootste korting eerst.</p>
+        <div class="list">${rows.slice(0,200).map(r=>rowHTML(r)).join('')||`<div class="empty">Op dit moment geen aanbiedingen gevonden bij ${S(one).name}.</div>`}</div>
+        ${rows.length>200?`<p class="demo">De eerste 200 van ${rows.length}. Typ bovenin om te zoeken binnen deze aanbiedingen.</p>`:''}${SRC()}`;
+    }
     let rows=liveDrops().filter(r=>(dropFilter==='all'||st.myStores.includes(rowStore(r,DROPS_SRC))) && (!query||r[1].toLowerCase().includes(query)));
-    return seg+`<div class="chips"><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">📍 Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>
-      <p class="hint">${rows.length} aanbiedingen van ${new Set(rows.map(r=>r[0])).size} supermarkten, plus prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
+    return seg+chips+`<p class="hint">${rows.length} aanbiedingen van ${new Set(rows.map(r=>r[0])).size} supermarkten, plus prijsdalingen (minstens 10% goedkoper dan de afgelopen 4 weken).</p>
       <div class="list">${rows.slice(0,120).map(r=>rowHTML(r,DROPS_SRC)).join('')||'<div class="empty">Geen prijsdalingen gevonden.</div>'}</div>${SRC()}`;
   }
   const cats=['Alles','🔥 Aanbiedingen',...new Set(PRODUCTS.map(p=>p.cat))];
@@ -302,6 +311,22 @@ function viewBrowse(){
   return seg+`<div class="chips">${cats.map(c=>`<button class="chip ${c===cat?'on':''}" data-cat="${c}">${c}</button>`).join('')}</div>
     <p class="hint">${list.length} veelgekochte producten, per supermarkt aan elkaar gekoppeld.</p>
     <div class="list">${list.map(itemHTML).join('')||`<div class="empty">Niet bij de vergeleken producten.<br><button class="btn sm green" data-bmode="all" style="margin-top:10px">Zoek in het hele assortiment</button></div>`}</div>${SRC()}`;
+}
+// alle aanbiedingen van één supermarkt uit het hele assortiment
+function storeOffers(sid){
+  if(!catalog||catalog.error) return [];
+  const i=catalog.stores.indexOf(sid); if(i<0) return [];
+  return catalog.rows.filter(r=>r[0]===i && (rowPromo(r) || (r[5] && r[5]>r[2]))).map(r=>{ const w=rowWas(r)||rowNow(r); return [r, w>0 ? (w-rowNow(r))/w : 0]; })
+    .sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+}
+function openStorePicker(){
+  loadCatalog();
+  const n = sid => catalog && !catalog.error ? storeOffers(sid).length : null;
+  const list=STORES.map(s=>({s,c:n(s.id)})).sort((a,b)=>(b.c??0)-(a.c??0));
+  sheet(`<h3 data-picker style="margin:4px 0 10px">🏪 Kies een supermarkt</h3><p class="hint">Bekijk alle aanbiedingen van één winkel.</p>
+    <div class="list">${list.map(({s,c})=>`<div class="item" data-dropf="${s.id}" style="cursor:pointer"><span class="dotc" style="background:${s.color};width:14px;height:14px;border-radius:50%;display:inline-block;flex:none"></span>
+      <div class="info"><div class="name">${s.name}</div><div class="meta">${c==null?'aanbiedingen tellen…':c?c+' aanbiedingen':'geen aanbiedingen gevonden'}${st.myStores.includes(s.id)?' · 📍 jouw winkel':''}</div></div><div class="price" style="color:var(--green);font-weight:600">›</div></div>`).join('')}</div>`);
+  if(!catalog) setTimeout(()=>{ if($('#sheet').classList.contains('show') && $('#sheet [data-picker]')) openStorePicker(); }, 700);
 }
 function viewCatalog(){
   if(!catalog){ loadCatalog(); return `<div class="empty"><div class="big">⏳</div>Hele assortiment laden…<br><span style="font-size:12px">±${(META.catalog/1000).toFixed(0)}.000 producten (eenmalig ±2 MB)</span></div>`; }
@@ -521,8 +546,8 @@ document.addEventListener('click', e=>{
   if(x=el('[data-recipe]')){ openRecipe(x.dataset.recipe); return; }
   if(x=el('[data-bmode]')){ bmode=x.dataset.bmode; const q=x.dataset.q; tab='browse'; sub=null; if(q){ query=q.toLowerCase(); $('#q').value=q; } else if(!x.closest('.seg')){ query=''; $('#q').value=''; } render(); $('#main').scrollTop=0; return; }
   if(x=el('[data-cat]')){ cat=x.dataset.cat; render(); return; }
-  if(x=el('[data-dropf]')){ dropFilter=x.dataset.dropf; render(); return; }
-  if(x=el('[data-claim]')){ const c=challenges().find(c=>c.id===x.dataset.claim); (st.claimed[WEEK]=st.claimed[WEEK]||[]).push(c.id); addPoints(c.pts,`Challenge “${c.t}” voltooid`); push(`⚡ +${c.pts} punten!`); render(); return; }
+  if(x=el('[data-dropf]')){ dropFilter=x.dataset.dropf; if($('#sheet').classList.contains('show')) closeSheet(); else render(); $('#main').scrollTop=0; return; }
+  if(x=el('[data-claim]')){ const c=challenges().find(c=>c.id===x.dataset.claim); (st.claimed[WEEK]=st.claimed[WEEK]||[]).push(c.id); if(c.once) (st.claimedOnce=st.claimedOnce||[]).push(c.id); addPoints(c.pts,`Challenge “${c.t}” voltooid`); push(`⚡ +${c.pts} punten!`); render(); return; }
   if(x=el('[data-store]')){ const id=x.dataset.store, i=st.myStores.indexOf(id); i>=0?st.myStores.splice(i,1):st.myStores.push(id); save(); render(); return; }
   if(x=el('[data-act]')){
     const a=x.dataset.act;
@@ -538,6 +563,7 @@ document.addEventListener('click', e=>{
     else if(a==='plan2list'){ const c=planCost(st.plan.ids,st.plan.sid,st.plan.persons); st.list=c.items.map(it=>(it.n>1?it.n+'x ':'')+it.p.name).join(', '); listShown=true; save(); go('list'); push('🛒 Je weekmenu staat op je boodschappenlijst.'); }
     else if(a==='share') shareWeek();
     else if(a==='notifoff'){ st.notif=false; save(); render(); }
+    else if(a==='pickstore'){ openStorePicker(); }
     else if(a==='lidlplus'){ st.lidlPlus = st.lidlPlus===false; save(); buildAlerts(); render(); }
     else if(a==='install' && deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{ deferredInstall=null; render(); }); }
     else if(a==='reset'){ if(x.dataset.sure){ localStorage.removeItem(KEY); location.reload(); } else { x.dataset.sure='1'; x.textContent='Zeker weten? Tik nogmaals om alles te wissen'; x.style.color='var(--deal)'; } }
