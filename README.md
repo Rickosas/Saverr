@@ -37,3 +37,7 @@ Elke ochtend draait een GitHub Action (`.github/workflows/update-prices.yml`). D
 - Bonus- en folderacties staan niet altijd in de data; Saverr ziet een korting pas als de online prijs daalt.
 - Meldingen komen als je de app opent (nog geen achtergrondmeldingen).
 - Ranglijst met vrienden, bonnetje scannen en cadeaubonnen komen in een volgende versie.
+
+## Foto's bij de recepten
+De receptfoto's in `recipes/` komen van [Wikimedia Commons](https://commons.wikimedia.org) en vallen onder vrije licenties
+(CC0, CC BY of CC BY-SA). De naam van de fotograaf en de licentie staan bij elke foto in de app.

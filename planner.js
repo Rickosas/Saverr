@@ -84,7 +84,23 @@ const RECIPES = [
         ['knoflook',.1,2,'teen','knoflook'],['tomatenblokjes',1,1,'blik','tomatenblokjes'],['kaas-geraspt',.33,50,'g','geraspte kaas']],
    steps:['Verwarm de oven voor op 200 °C. Kook de plakjes zoete aardappel 5 minuten voor.','Bak de kip met ui en knoflook gaar. Voeg de tomatenblokjes en spinazie toe en laat 3 minuten pruttelen.',
           'Doe het kipmengsel in een ovenschaal, leg de zoete aardappel er dakpansgewijs op en bestrooi met kaas.','Bak 25 minuten in de oven tot de bovenkant goudbruin is.']},
+
+  /* ---- cheatday 🍔 (alleen als je die optie aanzet) ---- */
+  {id:'cheat-pizza', cheat:true, name:'Pizza-avond', emoji:'🍕', main:'cheat', time:15, tags:['🍔 cheatday','😋 geniet ervan'],
+   ing:[['pizza-m',3,3,'st','diepvriespizza’s margherita'],['ijsbergsla',.5,.5,'st','ijsbergsla (voor het geweten 😉)']],
+   steps:['Verwarm de oven volgens de verpakking.','Bak de pizza’s goudbruin.','Snijd wat sla als bijgerecht (of sla die stap gerust over, het is cheatday).']},
+  {id:'cheat-pannenkoek', cheat:true, name:'Pannenkoeken met stroop', emoji:'🥞', main:'cheat', time:30, tags:['🍔 cheatday','🇳🇱 Hollands'],
+   ing:[['pannenkoekenmix',1,400,'g','pannenkoekenmix'],['melk',1,750,'ml','melk'],['eieren',.2,2,'st','eieren'],['stroop',.25,6,'el','schenkstroop']],
+   steps:['Klop de mix met de melk en eieren tot een glad beslag (zie verpakking).','Bak dunne pannenkoeken in een hete pan met een klontje boter.','Serveer met stroop. Poedersuiker mag ook vandaag!']},
+  {id:'cheat-friet', cheat:true, name:'Friet met gehaktballen', emoji:'🍟', main:'cheat', time:30, tags:['🍔 cheatday','😋 comfortfood'],
+   ing:[['friet',1,1000,'g','diepvriesfriet'],['gehakt',1,500,'g','rundergehakt'],['uien',.1,1,'st','ui, fijngesnipperd']],
+   steps:['Bak de friet in de oven of airfryer volgens de verpakking.','Kneed het gehakt met de ui, zout en peper en draai er balletjes van.','Bak de balletjes in 10–12 minuten rondom bruin en gaar. Mayo erbij? Het is cheatday!']},
 ];
+const HEALTHY = () => RECIPES.filter(r=>!r.cheat && recipeOK(r));
+const CHEATS = () => RECIPES.filter(r=>r.cheat && recipeOK(r));
+/* foto's: Wikimedia Commons (vrije licenties), verkleind in /recipes */
+const RECIPE_PHOTOS = {"kipcurry": {"a": "pelican from Tokyo, Japan", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_spinach_curry_(424955518).jpg"}, "kippasta": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Ravioli_with_mushrooms_and_spinach_in_cream_sauce.jpg"}, "chili": {"a": "Carstor", "l": "CC BY-SA 2.5", "u": "https://commons.wikimedia.org/wiki/File:Bowl_of_chili.jpg"}, "wok": {"a": "Ginny", "l": "CC BY-SA 2.0", "u": "https://commons.wikimedia.org/wiki/File:Ginger_chicken_(3168342551).jpg"}, "paprikavul": {"a": "Mark Bonica", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Quinoa_stuffed_peppers.jpg"}, "kipsperzie": {"a": "Daderot", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Potatoes,_chicken_breast,_and_green_beans,_peas,_and_asparagus_-_Boston,_MA.jpg"}, "couscouskip": {"a": "HaJunkiyada", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Liat_Portal_for_Foodie_Disorder_-_Algerian_couscous_with_vegetable_soup_and_chicken.jpg"}, "zalmoven": {"a": "Famartin", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2022-01-29_20_53_20_Blackened_Cajun_Salmon_(6_oz._blackened_and_grilled_salmon_fillet_with_garlic_mashed_potatoes_and_steamed_broccoli)_at_the_Applebee%27s_in_Fair_Lakes,_Fairfax_County,_Virginia.jpg"}, "koolvis": {"a": "Nonepse", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Lohikeitto_dish.jpg"}, "bolognesegroente": {"a": "Matěj Baťha", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Penne_Bolognese_(Tesco).jpg"}, "nasigroente": {"a": "Supardisahabu", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:Nasi_Goreng_Kampung.jpg"}, "zalmspinazie": {"a": "PattayaPatrol", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:DSCF0412_Seared_salmon_fillet_topped_with_saut%C3%A9ed_shrimp_served_with_creamed_spinach_and_a_side_salad.jpg"}, "wrapskip": {"a": "Luca Nebuloni from Milan, Italy", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Chicken_roll_with_vegetables_%26_goat_cheese_(5742199145).jpg"}, "hutspotbal": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_0330_Hutspot_karbonade.jpg"}, "zoeteovenschotel": {"a": "Alikiiaa", "l": "CC0", "u": "https://commons.wikimedia.org/wiki/File:Sweet_Potato_Sauteed_With_Honey.jpg"}, "cheat-pizza": {"a": "Mario56", "l": "CC BY-SA 3.0", "u": "https://commons.wikimedia.org/wiki/File:Margherita_Originale.JPG"}, "cheat-pannenkoek": {"a": "Takeaway", "l": "CC BY-SA 4.0", "u": "https://commons.wikimedia.org/wiki/File:2015_01_Spekpannenkoek.jpg"}, "cheat-friet": {"a": "Neil Conway from Oakland, USA", "l": "CC BY 2.0", "u": "https://commons.wikimedia.org/wiki/File:Sunday_morning_meatballs_and_shopping._(7481070476).jpg"}};
+const recipePhoto = id => RECIPE_PHOTOS[id] ? `recipes/${id}.jpg` : '';
 
 /* normale prijs van een product = mediaan van de normale prijzen (zonder prijsdalingen) over alle winkels */
 const normalOf = p => { const v=Object.keys(p.st).map(sid=>regOf(p,sid)).sort((a,b)=>a-b); return v[Math.floor((v.length-1)/2)]; };
@@ -117,19 +133,20 @@ function evalPlan(ids, sid, persons, storeIds){
 const planStores = f => { const mine=CMP_STORES.filter(s=>st.myStores.includes(s.id)); return (f.allStores||!mine.length?CMP_STORES:mine).map(s=>s.id); };
 
 function makePlan({persons,budget,days,allStores}, fixed=null){
-  const pool=RECIPES.filter(recipeOK), stores=planStores({allStores});
+  const pool=HEALTHY(), cheats=CHEATS(), stores=planStores({allStores}), cheat=arguments[0].cheat && cheats.length;
   let best=null; const cands=[];
   const score = c => {
     const over=Math.max(0,c.total-budget);
-    const mains=new Set(c.meals.map(m=>m.r.main)).size;
+    const mains=new Set(c.meals.filter(m=>!m.r.cheat).map(m=>m.r.main)).size;
     return -over*10 + c.saved*1.5 + (budget-c.total) + mains - c.missing*4 + Math.random()*2;
   };
   for(let i=0;i<500;i++){
     let ids;
-    if(fixed){ ids=[...fixed.ids]; const choices=pool.filter(r=>!ids.includes(r.id)); ids[fixed.swap]=choices[Math.floor(Math.random()*choices.length)].id; }
-    else { const sh=[...pool].sort(()=>Math.random()-.5); ids=sh.slice(0,days).map(r=>r.id); }
+    if(fixed){ ids=[...fixed.ids]; const isCheat=RECIPES.find(r=>r.id===ids[fixed.swap]).cheat;
+      const choices=(isCheat?cheats:pool).filter(r=>!ids.includes(r.id)); if(!choices.length) break; ids[fixed.swap]=choices[Math.floor(Math.random()*choices.length)].id; }
+    else { const sh=[...pool].sort(()=>Math.random()-.5); ids=sh.slice(0,days).map(r=>r.id); if(cheat) ids.push(cheats[Math.floor(Math.random()*cheats.length)].id); }
     // max 2 keer dezelfde hoofdingrediënt
-    const cnt={}; if(ids.some(id=>{ const m=RECIPES.find(r=>r.id===id).main; cnt[m]=(cnt[m]||0)+1; return cnt[m]>2; })) continue;
+    const cnt={}; if(ids.some(id=>{ const m=RECIPES.find(r=>r.id===id).main; cnt[m]=(cnt[m]||0)+1; return m!=='cheat' && cnt[m]>2; })) continue;
     for(const sid of (fixed?[fixed.sid]:stores)){
       const c=evalPlan(ids,sid,persons,stores); c.score=score(c); c.ids=ids; cands.push(c);
       if(!best||c.score>best.score) best=c;
@@ -155,6 +172,8 @@ function viewPlanner(){
     ${step('persons',1,8,1,v=>v)}
     ${step('budget',15,250,5,v=>'€'+v)}
     ${step('days',2,7,1,v=>v)}
+    <div class="row"><div class="st">🍔 Cheatday-maaltijd<em>Eén extra avond zonder schuldgevoel</em></div>
+      <button class="switch ${f.cheat?'on':''}" data-act="cheat" aria-label="Cheatday"></button></div>
     <div class="chips" style="margin-top:6px"><button class="chip ${!f.allStores?'on':''}" data-pall="0">📍 Mijn winkels</button><button class="chip ${f.allStores?'on':''}" data-pall="1">Alle supermarkten</button></div>
     <button class="btn green" data-act="mkplan">${plan?'🔄 Maak een nieuw weekmenu':'✨ Maak mijn weekmenu'}</button>
     ${plan?planHTML(plan,start):''}`;
@@ -162,9 +181,9 @@ function viewPlanner(){
 function planHTML(c,start){
   const p=st.plan, over=c.total>p.budget+0.005;
   return `<h2>🍝 Jouw weekmenu</h2>
-    <p class="hint">${p.persons} personen · ${p.ids.length} avonden · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
+    <p class="hint">${p.persons} personen · ${p.ids.length} avonden${p.cheat?' (incl. 🍔 cheatday)':''} · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
     <div class="list">${c.meals.map((m,i)=>{const d=new Date(start); d.setDate(d.getDate()+i); return `<div class="item static">
-      <div class="emoji">${m.r.emoji}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:var(--green);text-transform:capitalize">${DAYS[d.getDay()]}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${m.r.tags[0]} · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
+      <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${m.r.cheat?'var(--deal)':'var(--green)'};text-transform:capitalize">${DAYS[d.getDay()]}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${m.r.tags[0]} · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
       <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
       <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
@@ -183,7 +202,7 @@ function doPlan(swapIndex=null){
   const f=planForm; st.planPrefs={...f};
   const c = swapIndex==null ? makePlan(f) : makePlan({...f,persons:st.plan.persons,budget:st.plan.budget,days:st.plan.ids.length,allStores:st.plan.allStores}, {ids:st.plan.ids, swap:swapIndex, sid:st.plan.sid});
   if(!c) return push('Er kon geen weekmenu gemaakt worden.');
-  st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,allStores:swapIndex==null?f.allStores:st.plan.allStores,created:swapIndex==null?Date.now():st.plan.created};
+  st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,allStores:swapIndex==null?f.allStores:st.plan.allStores,cheat:swapIndex==null?f.cheat:st.plan.cheat,created:swapIndex==null?Date.now():st.plan.created};
   if(swapIndex==null && st.planPts!==WEEK){ st.planPts=WEEK; addPoints(20,'Weekmenu gemaakt'); push(`✨ Weekmenu klaar: ${euro(c.saved)} bespaard! +20 punten.`); }
   save(); render();
 }
@@ -202,7 +221,9 @@ function fmtQty(amount, unit, k){
 function openRecipe(rid){
   const r=RECIPES.find(x=>x.id===rid); if(!r) return;
   const persons = (st.plan&&st.plan.persons)||4, k=persons/4, sid=st.plan&&st.plan.sid;
-  sheet(`<div class="sheet-head"><div class="emoji">${r.emoji}</div><div><h3>${esc(r.name)}</h3><div class="meta">⏱ ${r.time} min · ${persons} personen</div></div></div>
+  const ph=RECIPE_PHOTOS[rid];
+  sheet(`${ph?`<div class="recipe-hero"><img src="${recipePhoto(rid)}" alt="${esc(r.name)}"><a class="credit" href="${esc(ph.u)}" target="_blank" rel="noopener">Foto: ${esc(ph.a)} · ${esc(ph.l)} · Wikimedia Commons</a></div>`:''}
+    <div class="sheet-head"><div class="emoji">${r.emoji}</div><div><h3>${esc(r.name)}</h3><div class="meta">⏱ ${r.time} min · ${persons} personen${r.cheat?' · 🍔 cheatday':''}</div></div></div>
     <div class="tagrow">${r.tags.map(t=>`<span>${t}</span>`).join('')}</div>
     <h2 style="font-size:16px">Ingrediënten</h2>
     <div class="list">${r.ing.map(([id,,amt,unit,label])=>{const p=P(id);return `<div class="item static" style="padding:8px 12px"${p?` data-open="${id}"`:''}>
@@ -210,7 +231,8 @@ function openRecipe(rid){
       ${p&&sid&&has(p,sid)?`<div class="price" style="font-size:12px;color:var(--muted)">${S(sid).name}</div>`:''}</div>`}).join('')}</div>
     <p class="demo" style="text-align:left">Verder nodig: olie, zout, peper en kruiden.</p>
     <h2 style="font-size:16px">Bereiding</h2>
-    <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`);
+    <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    ${ph?'<p class="demo">Sfeerfoto; jouw gerecht kan er anders uitzien.</p>':''}`);
 }
 
 /* ---------- weekoverzicht ---------- */

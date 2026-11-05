@@ -479,7 +479,7 @@ function alarmBox(key, normal, t, name){
     <div class="meta" style="margin-top:8px">${t!=null?`Je krijgt een melding zodra ${esc(name)} ${euro(t)} of goedkoper is.`:'Stel een gewenste prijs in en krijg alleen een melding als die bereikt wordt.'}</div></div>`;
 }
 let sheetFn=null;
-function sheet(html){ $('#toast').classList.remove('show'); $('#sheet').innerHTML=`<div class="grab"></div><button class="back" data-act="close" style="position:absolute;right:16px;top:10px;font-size:20px;color:var(--muted)" aria-label="Sluiten">✕</button>`+html; $('#sheet').classList.add('show'); $('#scrim').classList.add('show'); $('#sheet').scrollTop=0; }
+function sheet(html){ $('#toast').classList.remove('show'); $('#sheet').innerHTML=`<div class="grab"></div><button class="back" data-act="close" style="position:absolute;right:14px;top:10px;font-size:17px;color:var(--ink);z-index:5;background:rgba(255,255,255,.92);width:34px;height:34px;border-radius:50%;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.15)" aria-label="Sluiten">✕</button>`+html; $('#sheet').classList.add('show'); $('#scrim').classList.add('show'); $('#sheet').scrollTop=0; }
 function closeSheet(){ $('#sheet').classList.remove('show'); $('#scrim').classList.remove('show'); sheetFn=null; render(); }
 function markSeen(fn){ alerts.filter(fn).forEach(a=>{ if(!st.seen.includes(a.key)) st.seen.push(a.key); }); save(); }
 
@@ -533,6 +533,7 @@ document.addEventListener('click', e=>{
     else if(a==='settarget'){ const k=x.dataset.k; setTarget(k, parseFloat(($('#tIn').value||'').replace(',','.'))); k.startsWith('c:')?openRow(...splitC(k)):openProduct(k); }
     else if(a==='deltarget'){ const k=x.dataset.k; delete st.targets[k]; save(); buildAlerts(); k.startsWith('c:')?openRow(...splitC(k)):openProduct(k); }
     else if(a==='notif') enableNotifications();
+    else if(a==='cheat'){ planForm.cheat=!planForm.cheat; render(); }
     else if(a==='mkplan'){ x.textContent='⏳ Bezig met rekenen…'; setTimeout(()=>doPlan(),30); }
     else if(a==='plan2list'){ const c=planCost(st.plan.ids,st.plan.sid,st.plan.persons); st.list=c.items.map(it=>(it.n>1?it.n+'x ':'')+it.p.name).join(', '); listShown=true; save(); go('list'); push('🛒 Je weekmenu staat op je boodschappenlijst.'); }
     else if(a==='share') shareWeek();
