@@ -83,4 +83,15 @@ SPECS=[
  ('couscous','Couscous 500g','🥣','Voorraad',['couscous'],['volkoren','parel','pearl','salade','mix','kruiden','tabouleh','groente','bloemkool','maaltijd','oosterse','snel','kip','spicy'],'g',400,1000),
  ('krieltjes','Krieltjes','🥔','Groente & fruit',['krieltjes|kriel'],['gekookt','gebakken','kruiden','oven','schijfjes','partjes','rozemarijn','gepoft','salade','soep','diepvries','voorgegaard','zalm','kip','spek','ui','knoflook','maaltijd','schotel','mini','bakje'],'g',600,1000),
  ('citroen','Citroenen','🍋','Groente & fruit',['citroen'],['sap','limonade','thee','olie','rasp','taart','drink','ijs','yoghurt','water','koek','gedroogd','peper','marmelade','curd','siroop','gras','kwark','saus','dressing','zeep','afwas','reiniger','spray','schoonmaak','tonijn','mayo','frisdrank','fanta','pellets','vla','bitter','soda','sorbet','geur','geurstokjes','kaars','tic','tac','snoep','pie','muffin','cake','wafel','biscuit','bonbon','ice','vruchten','sap','sinaasappel'],None,0,0),
+ # ---- ingrediënten voor cheatday-recepten ----
+ ('hamburgerbroodjes','Hamburgerbroodjes','🍔','Brood',['hamburgerbroodje|hamburger broodje|burgerbroodje|burger broodje|hamburgerbol|burger buns|brioche burger'],['vega','glutenvrij','mini','sesam'],None,0,0),
+ ('cheddar','Cheddar plakken','🧀','Zuivel',['cheddar'],['geraspt','rasp','blok','stuk','chips','crackers','saus','dip','sticks','snack','popcorn','zoutjes','kaasvlinders','borrel','vegan','light','gerijpt','mature','old','extra'],None,0,0),
+ ('tortillachips','Tortillachips naturel','🌮','Snacks',['tortilla chips|tortillachips|nacho chips|nachochips|tortilla'],['chili','cheese','paprika','salsa','dip','wraps','wrap','sweet','bbq','kaas','spicy','hot','lime','limoen','pakket','kit','mini','bak','burrito','taco','enchilada','pita'],None,0,0),
+ ('knakworsten','Knakworsten','🌭','Vlees & vis',['knakworst|knakworsten|knakken'],['kip','vega','vegan','vegetarisch','plantaardig','rund','mini','cocktail','blik','soep','erwtensoep'],None,0,0),
+ ('hotdogbroodjes','Hotdogbroodjes','🌭','Brood',['hotdogbroodje|hotdog broodje|hot dog broodje|hotdogbol|hotdog bol'],['worst','worsten','saus','relish','mini','glutenvrij','vega','uien','ketchup','mosterd','pakket','kit','chips','snack'],None,0,0),
+ ('kipshoarma','Kipshoarma','🥙','Vlees & vis',['kipshoarma|kip shoarma|shoarma'],['vega','vegan','plantaardig','kruiden','kruidenmix','saus','broodje','pita','wrap','ovenschotel','salade','varken','lams','mix','maaltijd','pizza'],'g',300,800),
+ ('knoflooksaus','Knoflooksaus','🧄','Voorraad',['knoflooksaus'],['light','vegan','dip','mini','squeeze'],None,0,0),
+ ('lasagnebladen','Lasagnebladen','🍝','Voorraad',['lasagne'],['saus','kant','klaar','maaltijd','verse','vers','spinazie','vega','groente','diepvries','bolognese','kip','zalm','oven','pakket','mix','ovenschotel'],'g',200,500),
+ ('paneermeel','Paneermeel','🍞','Voorraad',['paneermeel|panko'],['kruiden','gekruid','glutenvrij','knoflook','kaas'],None,0,0),
+ ('mozzarella','Mozzarella','🧀','Zuivel',['mozzarella'],['geraspt','rasp','mini','sticks','pizza','light','buffel','bufala','burrata','salade','balletjes','tomaat','pesto','snack','vegan','plakken'],'g',100,150),
 ]

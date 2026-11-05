@@ -178,6 +178,8 @@ EXTRA = {
     'knoflook': dict(ban=['saus', 'poeder', 'kruiden', 'pasta', 'olie', 'granulaat', 'boter']),
     'zoete-aardappel': dict(ban=['blokjes', 'friet', 'frites', 'partjes', 'gratin']),
     'volkoren-pasta': dict(ban=['havermout', 'muesli', 'granola', 'brinta', 'graanontbijt', 'ontbijt']),
+    'cheddar': dict(ban=['lay', 'chips', 'smeltkaas', 'jalapeno', 'jalapeño']),
+    'tortillachips': dict(ban=['wecare', 'wraps']),
     'citroen': dict(ban=['schuur', 'sap', 'rasp', 'drank', 'reiniger', 'cleaner', 'gras', 'clear', 'radler', 'limonade', 'water']),
 }
 NAMES = {'aardappelen': 'Aardappelen 3 kg', 'kipfilet': 'Kipfilet ±500g', 'spa': 'Bruisend mineraalwater 1,5L', 'zalm': 'Zalmfilet ±250g',
