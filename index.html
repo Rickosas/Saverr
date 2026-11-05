@@ -251,6 +251,9 @@
   .sheet-head .emoji.pic .sb{font-size:11px;padding:3px 6px}
   .cat-row .emoji{width:46px;height:46px}
   .row .emoji.pic{width:40px;height:40px;font-size:20px;flex:none}
+  ol.steps{margin:0 0 10px 0;padding-left:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;background:#fff;border-radius:12px;padding:10px 12px 10px 44px;margin-bottom:7px;position:relative;font-size:14px;line-height:1.45}
+  ol.steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>

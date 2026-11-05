@@ -173,6 +173,12 @@ EXTRA = {
     'stroop': dict(ban=['wafel', 'koek', 'stift', 'bungel']),
     'nasigroente': dict(ban=['schijven', 'speciaal', 'padifood', 'ah nasi |']),
     'sperziebonen': dict(ban=['gebroken', 'hak ', 'pot', 'glas']),
+    'courgette': dict(ban=['spaghetti', 'linten', 'spiraal']),
+    'spinazie': dict(ban=['hak ', 'pot', 'glas']),
+    'knoflook': dict(ban=['saus', 'poeder', 'kruiden', 'pasta', 'olie', 'granulaat', 'boter']),
+    'zoete-aardappel': dict(ban=['blokjes', 'friet', 'frites', 'partjes', 'gratin']),
+    'volkoren-pasta': dict(ban=['havermout', 'muesli', 'granola', 'brinta', 'graanontbijt', 'ontbijt']),
+    'citroen': dict(ban=['schuur', 'sap', 'rasp', 'drank', 'reiniger', 'cleaner', 'gras', 'clear', 'radler', 'limonade', 'water']),
 }
 NAMES = {'aardappelen': 'Aardappelen 3 kg', 'kipfilet': 'Kipfilet ±500g', 'spa': 'Bruisend mineraalwater 1,5L', 'zalm': 'Zalmfilet ±250g',
          'paprika': 'Paprika mix 3 st', 'hagelslag': 'Hagelslag puur', 'griekse': 'Yoghurt Griekse stijl 1kg', 'kaas': 'Jong belegen kaasplakken',

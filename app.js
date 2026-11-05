@@ -257,7 +257,7 @@ function viewHome(){
   const mine = liveDrops().filter(r=>st.myStores.includes(rowStore(r,DROPS_SRC))).slice(0,5);
   return `${installBanner()}
     <p class="hello">${['Goedenacht','Goedemorgen','Goedemiddag','Goedenavond'][Math.floor(today.getHours()/6)]}! Zo staat je spaarpot ervoor 👇</p>
-    <button class="aicta" data-sub="planner"><span class="i">🤖</span><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je weekmenu':'Maak een weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
+    <button class="aicta" data-sub="planner"><span class="i">🤖</span><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je gezonde weekmenu':'Gezond weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
     <div class="hero" data-sub="week" style="cursor:pointer"><div class="lbl">Deze week bespaard</div><div class="amt">${euro(ws)}</div>
       <span class="trend">${buysWeek().length} prijsdalingen gebruikt · weekoverzicht ›</span>
       <div class="bars">${hist.map(h=>`<div class="${h.cur?'cur':''}"><i style="height:${Math.max(4,h.v/max*48)}px"></i><span>wk ${h.w}</span></div>`).join('')}</div></div>
@@ -518,6 +518,7 @@ document.addEventListener('click', e=>{
   if(x=el('[data-pstep]')){ const [k,d,mn,mx]=x.dataset.pstep.split('|'); planForm[k]=Math.min(+mx,Math.max(+mn,planForm[k]+ +d)); render(); return; }
   if(x=el('[data-pall]')){ planForm.allStores=x.dataset.pall==='1'; render(); return; }
   if(x=el('[data-swap]')){ doPlan(+x.dataset.swap); return; }
+  if(x=el('[data-recipe]')){ openRecipe(x.dataset.recipe); return; }
   if(x=el('[data-bmode]')){ bmode=x.dataset.bmode; const q=x.dataset.q; tab='browse'; sub=null; if(q){ query=q.toLowerCase(); $('#q').value=q; } else if(!x.closest('.seg')){ query=''; $('#q').value=''; } render(); $('#main').scrollTop=0; return; }
   if(x=el('[data-cat]')){ cat=x.dataset.cat; render(); return; }
   if(x=el('[data-dropf]')){ dropFilter=x.dataset.dropf; render(); return; }

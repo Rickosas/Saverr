@@ -22,7 +22,7 @@ Saverr vergelijkt de prijzen van 10 Nederlandse supermarkten en laat je weten wa
 - Actuele aanbiedingen van AH (bonus), Jumbo, Dirk, DekaMarkt, Poiesz, Lidl en Aldi, plus prijsdalingen
 - Favorieten, prijsalarm en meldingen
 - Boodschappenlijstje: bij welke winkel ben je het goedkoopst uit
-- 🤖 Help mij besparen: weekmenu binnen je budget, met boodschappenlijst en besparing
+- 🤖 Help mij besparen: gezond weekmenu (16 recepten met groente en vlees/vis) binnen je budget, met recepten, boodschappenlijst en besparing
 - 📊 Weekoverzicht met deelknop voor WhatsApp
 - Dashboard met je besparingen, challenges en punten
 - Werkt offline; je gegevens blijven op je eigen telefoon

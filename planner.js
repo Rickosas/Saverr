@@ -2,24 +2,88 @@
    Wordt geladen na app.js en gebruikt de data en helpers daaruit. */
 'use strict';
 
-/* ---------- recepten (hoeveelheden voor 4 personen, in verpakkingen) ----------
-   Voorbeeld: ['gehakt',1] = 1 pak rundergehakt (500 g); ['uien',.15] = 15% van een zak uien (1 kg). */
+/* Gezonde recepten voor 4 personen. Elk recept: groente + vlees of vis, volkoren waar het kan.
+   ing: [product, deel van de verpakking, hoeveelheid, eenheid, omschrijving]
+   (olie, zout, peper en gedroogde kruiden heb je meestal al in huis) */
 const RECIPES = [
-  {id:'bolognese', name:'Pasta bolognese', emoji:'🍝', main:'gehakt', ing:[['spaghetti',1],['gehakt',1],['tomatenblokjes',2],['uien',.15],['kaas-geraspt',.5]]},
-  {id:'kiprijst', name:'Kip met rijst en paprika', emoji:'🍗', main:'kip', ing:[['kipfilet',1],['rijst',.3],['paprika',1],['uien',.15],['ketjap',.1]]},
-  {id:'wraps', name:'Wraps met gehakt', emoji:'🌯', main:'gehakt', ing:[['wraps',1.3],['gehakt',1],['kidneybonen',1],['mais',1],['ijsbergsla',.5],['tomaten',.5],['kaas-geraspt',.5]]},
-  {id:'boerenkool', name:'Boerenkoolstamppot met rookworst', emoji:'🥬', main:'worst', ing:[['aardappelen',.5],['boerenkool',1.5],['rookworst',2],['melk',.2]]},
-  {id:'hutspot', name:'Hutspot met rookworst', emoji:'🥕', main:'worst', ing:[['aardappelen',.4],['wortelen',1],['uien',.3],['rookworst',2]]},
-  {id:'pizza', name:'Pizza-avond met salade', emoji:'🍕', main:'vega', ing:[['pizza-m',3],['ijsbergsla',.5],['komkommer',1]]},
-  {id:'nasi', name:'Nasi met kip', emoji:'🍛', main:'kip', ing:[['rijst',.3],['kipfilet',1],['nasigroente',1],['eieren',.4],['ketjap',.15]]},
-  {id:'pannenkoeken', name:'Pannenkoeken', emoji:'🥞', main:'vega', ing:[['pannenkoekenmix',1],['melk',1],['eieren',.3],['stroop',.3]]},
-  {id:'macaroni', name:'Macaroni met ham en kaas', emoji:'🧀', main:'ham', ing:[['macaroni',1],['hamblokjes',1],['kaas-geraspt',.5],['tomatenblokjes',1],['uien',.1]]},
-  {id:'zalm', name:'Zalm met aardappelen en broccoli', emoji:'🐟', main:'vis', ing:[['zalm',2],['aardappelen',.3],['broccoli',1.5]]},
-  {id:'gehaktbal', name:'Gehaktballen, aardappelen en sperziebonen', emoji:'🫛', main:'gehakt', ing:[['gehakt',1],['aardappelen',.3],['sperziebonen',1.5]]},
-  {id:'chili', name:'Chili con carne', emoji:'🌶️', main:'gehakt', ing:[['gehakt',1],['kidneybonen',2],['tomatenblokjes',2],['uien',.15],['paprika',.66],['rijst',.3]]},
-  {id:'carbonara', name:'Pasta carbonara', emoji:'🥓', main:'spek', ing:[['spaghetti',1],['spekjes',1.2],['eieren',.4],['kaas-geraspt',.5]]},
-  {id:'ovenkip', name:'Kip met groente uit de oven', emoji:'🥘', main:'kip', ing:[['kipfilet',1],['aardappelen',.3],['paprika',1],['broccoli',1]]},
-  {id:'groentepasta', name:'Pasta met groente en kaas', emoji:'🥗', main:'vega', ing:[['spaghetti',1],['tomatenblokjes',2],['paprika',1],['uien',.15],['kaas-geraspt',.7]]},
+  {id:'kipcurry', name:'Kipcurry met spinazie en zilvervliesrijst', emoji:'🍛', main:'kip', time:35, tags:['🥦 veel groente','💪 eiwitrijk'],
+   ing:[['kipfilet',1,500,'g','kipfilet, in blokjes'],['uien',.15,1,'st','ui, gesnipperd'],['knoflook',.1,2,'teen','knoflook, fijngehakt'],['paprika',.67,2,'st','rode paprika, in reepjes'],
+        ['tomatenpuree',1,1,'blikje','tomatenpuree'],['kokosmelk',1,400,'ml','kokosmelk'],['spinazie',.75,300,'g','verse spinazie'],['zilvervliesrijst',.3,300,'g','zilvervliesrijst']],
+   steps:['Kook de zilvervliesrijst volgens de verpakking (± 25 min).','Bak de ui en knoflook 2 minuten in een beetje olie. Voeg de kip toe en bak rondom bruin.',
+          'Roer de tomatenpuree en 2 tl kerriepoeder erdoor en bak 1 minuut mee. Voeg de paprika toe.','Schenk de kokosmelk erbij en laat 10 minuten zachtjes pruttelen.',
+          'Schep de spinazie erdoor tot hij geslonken is. Breng op smaak met zout en peper en serveer met de rijst.']},
+  {id:'zalmoven', name:'Zalm uit de oven met broccoli en zoete aardappel', emoji:'🐟', main:'vis', time:40, tags:['🐟 omega-3','🥦 veel groente'],
+   ing:[['zalm',2,4,'st','zalmfilets'],['zoete-aardappel',.8,800,'g','zoete aardappel, in blokjes'],['broccoli',1,1,'st','broccoli, in roosjes'],['knoflook',.1,2,'teen','knoflook']],
+   steps:['Verwarm de oven voor op 200 °C.','Hussel de zoete aardappel met 1 el olie, zout, peper en paprikapoeder en rooster 15 minuten op een bakplaat.',
+          'Leg de broccoli en de zalm op de bakplaat. Besprenkel met olie en de fijngehakte knoflook.','Bak alles nog 12–15 minuten tot de zalm gaar is. Lekker met een kneepje citroen.']},
+  {id:'kippasta', name:'Volkoren pasta met kip, champignons en spinazie', emoji:'🍝', main:'kip', time:25, tags:['🌾 volkoren','🥦 veel groente'],
+   ing:[['volkoren-pasta',.8,400,'g','volkoren penne'],['kipfilet',.8,400,'g','kipfilet, in reepjes'],['champignons',1,250,'g','champignons, in plakjes'],['spinazie',.75,300,'g','verse spinazie'],
+        ['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],['griekse',.15,150,'g','Griekse yoghurt'],['kaas-geraspt',.33,50,'g','geraspte kaas']],
+   steps:['Kook de pasta beetgaar.','Bak de ui en knoflook in een beetje olie, voeg de kip toe en bak gaar.','Bak de champignons 4 minuten mee en schep dan de spinazie erdoor.',
+          'Zet het vuur laag en roer de Griekse yoghurt en een scheutje kookvocht erdoor. Meng met de pasta en bestrooi met de kaas.']},
+  {id:'chili', name:'Chili con carne met extra groente', emoji:'🌶️', main:'gehakt', time:40, tags:['🫘 vezelrijk','💪 eiwitrijk'],
+   ing:[['gehakt',1,500,'g','rundergehakt (mager)'],['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],['paprika',.67,2,'st','paprika, in blokjes'],['tomatenpuree',1,1,'blikje','tomatenpuree'],
+        ['tomatenblokjes',2,2,'blik','tomatenblokjes'],['kidneybonen',1,1,'blik','kidneybonen, uitgelekt'],['mais',1,1,'blik','maïs, uitgelekt'],['zilvervliesrijst',.3,300,'g','zilvervliesrijst']],
+   steps:['Kook de rijst volgens de verpakking.','Bak het gehakt rul in een grote pan. Voeg ui, knoflook en paprika toe en bak 3 minuten mee.',
+          'Roer de tomatenpuree, 1 tl komijn en 1 tl paprikapoeder erdoor. Voeg de tomatenblokjes toe.','Laat 15 minuten zachtjes pruttelen. Roer de kidneybonen en maïs erdoor en verwarm nog 5 minuten.','Serveer met de rijst.']},
+  {id:'wok', name:'Kip-wokschotel met broccoli en paprika', emoji:'🥘', main:'kip', time:25, tags:['🥦 veel groente','⚡ snel'],
+   ing:[['kipfilet',1,500,'g','kipfilet, in reepjes'],['broccoli',1,1,'st','broccoli, in kleine roosjes'],['paprika',.67,2,'st','paprika, in reepjes'],['wortelen',.2,200,'g','wortel, in dunne reepjes'],
+        ['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],['ketjap',.1,3,'el','ketjap manis'],['zilvervliesrijst',.3,300,'g','zilvervliesrijst']],
+   steps:['Kook de rijst.','Verhit een wok met een beetje olie en roerbak de kip 4 minuten. Haal uit de pan.','Roerbak ui, knoflook, wortel en broccoli 4 minuten. Voeg de paprika toe en bak 2 minuten mee.',
+          'Doe de kip terug in de wok, schenk de ketjap en een scheutje water erbij en warm alles door. Serveer met de rijst.']},
+  {id:'koolvis', name:'Koolvis met prei, wortel en aardappelen', emoji:'🐟', main:'vis', time:35, tags:['🐟 mager','🥦 veel groente'],
+   ing:[['witvis',1.25,500,'g','koolvisfilet'],['prei',2,2,'st','prei, in ringen'],['wortelen',.3,300,'g','wortel, in plakjes'],['aardappelen',.33,1000,'g','aardappelen']],
+   steps:['Kook de aardappelen in 20 minuten gaar.','Bak de prei en wortel 8 minuten in een beetje olie tot ze zacht zijn. Breng op smaak met peper en nootmuskaat.',
+          'Bestrooi de vis met zout en peper en bak hem 3–4 minuten per kant in een koekenpan.','Serveer de vis op de groente met de aardappelen.']},
+  {id:'paprikavul', name:"Gevulde paprika's met gehakt en rijst", emoji:'🫑', main:'gehakt', time:45, tags:['🥦 veel groente','💪 eiwitrijk'],
+   ing:[['paprika',1.33,4,'st','grote paprika’s'],['gehakt',.8,400,'g','rundergehakt (mager)'],['zilvervliesrijst',.15,150,'g','zilvervliesrijst'],['courgette',1,1,'st','courgette, in blokjes'],
+        ['uien',.15,1,'st','ui'],['tomatenblokjes',1,1,'blik','tomatenblokjes'],['kaas-geraspt',.33,50,'g','geraspte kaas']],
+   steps:['Kook de rijst en verwarm de oven voor op 200 °C.','Bak het gehakt rul met de ui. Voeg courgette en de helft van de tomatenblokjes toe en bak 5 minuten.',
+          'Meng de rijst erdoor. Snijd de kapjes van de paprika’s, haal de zaadlijsten eruit en vul ze met het mengsel.',
+          'Zet ze in een ovenschaal op de rest van de tomatenblokjes, bestrooi met kaas en bak 25 minuten.']},
+  {id:'bloemkoolschotel', name:'Bloemkool-gehaktschotel met krieltjes', emoji:'🥦', main:'gehakt', time:40, tags:['🥦 veel groente'],
+   ing:[['bloemkool',1,1,'st','bloemkool, in roosjes'],['gehakt',1,500,'g','rundergehakt (mager)'],['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],
+        ['tomatenblokjes',1,1,'blik','tomatenblokjes'],['tomatenpuree',1,1,'blikje','tomatenpuree'],['krieltjes',.8,800,'g','krieltjes']],
+   steps:['Verwarm de oven voor op 200 °C. Kook de bloemkool 5 minuten en laat uitlekken.','Bak het gehakt rul met ui en knoflook. Roer de tomatenpuree en tomatenblokjes erdoor en laat 5 minuten pruttelen.',
+          'Doe het gehakt in een ovenschaal en leg de bloemkool erop. Bak 20 minuten in de oven.','Bak ondertussen de krieltjes in een beetje olie in 20 minuten goudbruin.']},
+  {id:'kipsperzie', name:'Kipfilet met sperziebonen en krieltjes', emoji:'🫛', main:'kip', time:30, tags:['🥦 veel groente','💪 eiwitrijk'],
+   ing:[['kipfilet',1,500,'g','kipfilet'],['sperziebonen',1,500,'g','sperziebonen'],['krieltjes',.8,800,'g','krieltjes'],['knoflook',.1,2,'teen','knoflook']],
+   steps:['Bak de krieltjes in een beetje olie in ± 20 minuten gaar en goudbruin.','Kook de sperziebonen 8 minuten. Schep ze om met de fijngehakte knoflook en een beetje olie.',
+          'Bestrooi de kipfilets met zout, peper en paprikapoeder en bak ze 5–6 minuten per kant tot ze gaar zijn.','Serveer alles samen.']},
+  {id:'couscouskip', name:'Couscous met kip, courgette en paprika', emoji:'🥣', main:'kip', time:25, tags:['🥦 veel groente','⚡ snel'],
+   ing:[['couscous',.7,300,'g','couscous'],['kipfilet',.8,400,'g','kipfilet, in blokjes'],['courgette',1,1,'st','courgette, in blokjes'],['paprika',.67,2,'st','paprika, in blokjes'],
+        ['uien',.15,1,'st','rode ui'],['tomaten',.5,250,'g','tomaten, in partjes'],['knoflook',.1,1,'teen','knoflook']],
+   steps:['Giet kokend water (met een bouillonblokje) over de couscous, dek af en laat 5 minuten wellen.','Bak de kip met ui en knoflook in een beetje olie gaar.',
+          'Bak courgette en paprika 5 minuten mee. Breng op smaak met komijn, zout en peper.','Meng de couscous los met een vork, schep de kip en groente erdoor en verdeel de tomaat erover.']},
+  {id:'bolognesegroente', name:'Volkoren bolognese met verstopte groente', emoji:'🍝', main:'gehakt', time:35, tags:['🌾 volkoren','🥦 veel groente'],
+   ing:[['volkoren-pasta',.8,400,'g','volkoren penne'],['gehakt',.8,400,'g','rundergehakt (mager)'],['wortelen',.2,200,'g','wortel, geraspt'],['courgette',1,1,'st','courgette, in kleine blokjes'],
+        ['champignons',1,250,'g','champignons, fijngehakt'],['uien',.15,1,'st','ui'],['knoflook',.1,2,'teen','knoflook'],['tomatenblokjes',2,2,'blik','tomatenblokjes'],['tomatenpuree',1,1,'blikje','tomatenpuree']],
+   steps:['Bak het gehakt rul. Voeg ui, knoflook, wortel, courgette en champignons toe en bak 5 minuten mee.','Roer de tomatenpuree erdoor, voeg de tomatenblokjes en 1 tl Italiaanse kruiden toe.',
+          'Laat de saus minstens 15 minuten zachtjes pruttelen.','Kook ondertussen de pasta en serveer met de saus.']},
+  {id:'nasigroente', name:'Nasi met kip en veel groente', emoji:'🍛', main:'kip', time:30, tags:['🥦 veel groente'],
+   ing:[['zilvervliesrijst',.3,300,'g','zilvervliesrijst (liefst van gisteren)'],['kipfilet',.8,400,'g','kipfilet, in blokjes'],['nasigroente',1,450,'g','nasi-/bamigroente'],
+        ['eieren',.4,4,'st','eieren'],['ketjap',.1,3,'el','ketjap manis']],
+   steps:['Kook de rijst en laat hem afkoelen (rijst van een dag eerder werkt het best).','Bak de kip in een wok met een beetje olie en 1 tl nasikruiden.',
+          'Voeg de nasigroente toe en roerbak 5 minuten. Schep de rijst erdoor en bak mee tot alles warm is. Maak op smaak met ketjap.','Bak de eieren tot omelet, snijd in reepjes en leg ze op de nasi.']},
+  {id:'zalmspinazie', name:'Volkoren pasta met zalm en spinazie', emoji:'🐟', main:'vis', time:25, tags:['🐟 omega-3','🌾 volkoren'],
+   ing:[['volkoren-pasta',.8,400,'g','volkoren penne'],['zalm',2,4,'st','zalmfilets, in blokjes'],['spinazie',1,400,'g','verse spinazie'],['tomaten',.5,250,'g','tomaten, in blokjes'],
+        ['knoflook',.1,2,'teen','knoflook'],['griekse',.15,150,'g','Griekse yoghurt']],
+   steps:['Kook de pasta beetgaar.','Bak de knoflook kort in een beetje olie en bak de zalm 4 minuten mee.','Voeg de spinazie en tomaat toe en laat de spinazie slinken.',
+          'Zet het vuur laag, roer de Griekse yoghurt erdoor en meng met de pasta. Breng op smaak met peper en citroen.']},
+  {id:'wrapskip', name:'Volle wraps met kip, bonen en groente', emoji:'🌯', main:'kip', time:25, tags:['🥦 veel groente','🫘 vezelrijk'],
+   ing:[['wraps',1,8,'st','tortillawraps'],['kipfilet',1,500,'g','kipfilet, in reepjes'],['paprika',.67,2,'st','paprika, in reepjes'],['uien',.15,1,'st','ui'],['mais',1,1,'blik','maïs'],
+        ['kidneybonen',1,1,'blik','kidneybonen'],['ijsbergsla',.5,.5,'st','ijsbergsla'],['tomaten',.5,250,'g','tomaten'],['griekse',.15,150,'g','Griekse yoghurt']],
+   steps:['Bak de kip met ui en paprika in een beetje olie. Breng op smaak met 1 tl paprikapoeder en 1 tl komijn.','Voeg de uitgelekte bonen en maïs toe en warm 3 minuten mee.',
+          'Snijd de sla en tomaat. Verwarm de wraps kort in een droge pan.','Vul de wraps met de kip, groente en een lepel Griekse yoghurt.']},
+  {id:'hutspotbal', name:'Hutspot met magere gehaktballetjes', emoji:'🥕', main:'gehakt', time:40, tags:['🥦 veel groente','🇳🇱 Hollands'],
+   ing:[['aardappelen',.33,1000,'g','aardappelen'],['wortelen',.6,600,'g','winterpeen'],['uien',.45,3,'st','uien'],['gehakt',.8,400,'g','rundergehakt (mager)']],
+   steps:['Schil de aardappelen en snijd ze met de wortel en uien in stukken. Kook alles samen in 20 minuten gaar.',
+          'Kruid het gehakt met zout, peper en nootmuskaat, draai er kleine balletjes van en bak ze in ± 10 minuten gaar.','Giet de groente af en stamp met een scheutje melk tot hutspot. Serveer met de balletjes.']},
+  {id:'zoeteovenschotel', name:'Ovenschotel met zoete aardappel, kip en spinazie', emoji:'🍠', main:'kip', time:45, tags:['🥦 veel groente','💪 eiwitrijk'],
+   ing:[['zoete-aardappel',.8,800,'g','zoete aardappel, in plakjes'],['kipfilet',1,500,'g','kipfilet, in blokjes'],['spinazie',.75,300,'g','verse spinazie'],['uien',.15,1,'st','ui'],
+        ['knoflook',.1,2,'teen','knoflook'],['tomatenblokjes',1,1,'blik','tomatenblokjes'],['kaas-geraspt',.33,50,'g','geraspte kaas']],
+   steps:['Verwarm de oven voor op 200 °C. Kook de plakjes zoete aardappel 5 minuten voor.','Bak de kip met ui en knoflook gaar. Voeg de tomatenblokjes en spinazie toe en laat 3 minuten pruttelen.',
+          'Doe het kipmengsel in een ovenschaal, leg de zoete aardappel er dakpansgewijs op en bestrooi met kaas.','Bak 25 minuten in de oven tot de bovenkant goudbruin is.']},
 ];
 
 /* normale prijs van een product = mediaan van de normale prijzen (zonder prijsdalingen) over alle winkels */
@@ -80,13 +144,14 @@ function makePlan({persons,budget,days,allStores}, fixed=null){
 let planForm = null;
 function viewPlanner(){
   const f = planForm || (planForm = Object.assign({persons:4,budget:60,days:5,allStores:false}, st.planPrefs||{}));
+  if(st.plan && !(st.plan.ids||[]).every(id=>RECIPES.some(r=>r.id===id && recipeOK(r)))) { st.plan=null; save(); }   // oud menu met verdwenen recepten
   const plan = st.plan && st.plan.ids ? evalPlan(st.plan.ids, st.plan.sid, st.plan.persons, planStores(st.plan)) : null;
   const start = new Date(st.plan?.created||Date.now());
   const step = (k,min,max,stepv,fmt) => `<div class="row"><div class="st">${{persons:'Aantal personen',budget:'Budget',days:'Aantal avonden'}[k]}</div>
     <button class="btn sm ghost" data-pstep="${k}|${-stepv}|${min}|${max}">−</button><b style="min-width:56px;text-align:center;font-family:'Bricolage Grotesque';font-size:17px">${fmt(f[k])}</b><button class="btn sm ghost" data-pstep="${k}|${stepv}|${min}|${max}">+</button></div>`;
   return `<button class="back" data-act="back">‹ Terug</button>
     <h2>🤖 Help mij besparen</h2>
-    <p class="hint">Saverr maakt een weekmenu binnen je budget, met de echte prijzen van vandaag, en zoekt uit bij welke van jouw winkels je het goedkoopst uit bent.</p>
+    <p class="hint">Saverr maakt een <b>gezond weekmenu</b> (groente met vlees of vis, volkoren waar het kan) binnen je budget, met de prijzen en aanbiedingen van vandaag. Tik op een gerecht voor het recept.</p>
     ${step('persons',1,8,1,v=>v)}
     ${step('budget',15,250,5,v=>'€'+v)}
     ${step('days',2,7,1,v=>v)}
@@ -99,7 +164,7 @@ function planHTML(c,start){
   return `<h2>🍝 Jouw weekmenu</h2>
     <p class="hint">${p.persons} personen · ${p.ids.length} avonden · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
     <div class="list">${c.meals.map((m,i)=>{const d=new Date(start); d.setDate(d.getDate()+i); return `<div class="item static">
-      <div class="emoji">${m.r.emoji}</div><div class="info"><div class="meta" style="font-weight:600;color:var(--green);text-transform:capitalize">${DAYS[d.getDay()]}</div><div class="name" style="white-space:normal">${m.r.name}</div></div>
+      <div class="emoji">${m.r.emoji}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:var(--green);text-transform:capitalize">${DAYS[d.getDay()]}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${m.r.tags[0]} · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
       <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
       <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
@@ -121,6 +186,31 @@ function doPlan(swapIndex=null){
   st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,allStores:swapIndex==null?f.allStores:st.plan.allStores,created:swapIndex==null?Date.now():st.plan.created};
   if(swapIndex==null && st.planPts!==WEEK){ st.planPts=WEEK; addPoints(20,'Weekmenu gemaakt'); push(`✨ Weekmenu klaar: ${euro(c.saved)} bespaard! +20 punten.`); }
   save(); render();
+}
+
+/* ---------- receptkaart ---------- */
+function fmtQty(amount, unit, k){
+  let v = amount*k;
+  if(unit==='g'||unit==='ml') v = v>=100 ? Math.round(v/25)*25 : Math.round(v/5)*5;
+  else if(unit==='el') v = Math.max(1, Math.round(v));
+  else v = Math.max(0.5, Math.round(v*2)/2);
+  if(unit==='g' && v>=1000){ return (Math.round(v/100)/10).toString().replace('.',',')+' kg'; }
+  const n = String(v).replace('.5','½').replace(/^0½$/,'½');
+  const u = {st:'', teen: v>1?'tenen':'teen', blik: v>1?'blikken':'blik', blikje: v>1?'blikjes':'blikje', el:'el', g:'g', ml:'ml'}[unit] ?? unit;
+  return `${n}${u?' '+u:''}`.replace('½ ',' ½ ').trim();
+}
+function openRecipe(rid){
+  const r=RECIPES.find(x=>x.id===rid); if(!r) return;
+  const persons = (st.plan&&st.plan.persons)||4, k=persons/4, sid=st.plan&&st.plan.sid;
+  sheet(`<div class="sheet-head"><div class="emoji">${r.emoji}</div><div><h3>${esc(r.name)}</h3><div class="meta">⏱ ${r.time} min · ${persons} personen</div></div></div>
+    <div class="tagrow">${r.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+    <h2 style="font-size:16px">Ingrediënten</h2>
+    <div class="list">${r.ing.map(([id,,amt,unit,label])=>{const p=P(id);return `<div class="item static" style="padding:8px 12px"${p?` data-open="${id}"`:''}>
+      <div class="info"><div class="name" style="white-space:normal;font-weight:500"><b>${fmtQty(amt,unit,k)}</b> ${esc(label)}</div></div>
+      ${p&&sid&&has(p,sid)?`<div class="price" style="font-size:12px;color:var(--muted)">${S(sid).name}</div>`:''}</div>`}).join('')}</div>
+    <p class="demo" style="text-align:left">Verder nodig: olie, zout, peper en kruiden.</p>
+    <h2 style="font-size:16px">Bereiding</h2>
+    <ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`);
 }
 
 /* ---------- weekoverzicht ---------- */
