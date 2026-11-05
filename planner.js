@@ -225,7 +225,7 @@ function planHTML(c,start){
   return `<h2>🍝 Jouw weekmenu</h2>
     <p class="hint">${p.persons} personen · ${p.ids.length} avonden${p.cheat?' (incl. 🍔 cheatday)':''} · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
     <div class="list">${c.meals.map((m,i)=>{const d=new Date(start); d.setDate(d.getDate()+i); return `<div class="item static">
-      <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${m.r.cheat?'var(--deal)':'var(--green)'};text-transform:capitalize">${DAYS[d.getDay()]}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${m.r.tags[0]} · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
+      <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${m.r.cheat?'var(--deal)':'var(--green)'};text-transform:capitalize">${DAYS[d.getDay()]}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${macros(m.r).kcal} kcal · ${macros(m.r).eiwit} g eiwit · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
       <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
       <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
@@ -249,6 +249,40 @@ function doPlan(swapIndex=null){
   save(); render();
 }
 
+/* ---------- macro's per portie (schatting, gemiddelde voedingswaarden per 100 g, rauw/droog) ---------- */
+// id: [kcal, eiwit, koolhydraten, vet, gram per eenheid {st, teen, blik, blikje, el, plak}]
+const NUTRI = {
+  kipfilet:[110,24,0,1.5], uien:[37,1.2,7,.2,{st:100}], knoflook:[140,6,28,.5,{teen:4}], paprika:[30,1,5,.3,{st:160}],
+  tomatenpuree:[90,4.5,15,.5,{blikje:70}], kokosmelk:[190,1.8,3,19], spinazie:[23,2.9,1,.4], zilvervliesrijst:[355,8,74,2.5],
+  zalm:[200,20,0,13,{st:125}], 'zoete-aardappel':[86,1.6,20,.1], broccoli:[34,3,4,.4,{st:350}], 'volkoren-pasta':[350,13,64,2.5],
+  champignons:[22,3,.5,.3], griekse:[120,4,4,10], 'kaas-geraspt':[380,25,0,31], gehakt:[210,19,0,15],
+  tomatenblokjes:[22,1.2,3.5,.2,{blik:400}], kidneybonen:[105,7,14,.5,{blik:250}], mais:[85,2.8,15,1.3,{blik:285}],
+  wortelen:[38,.8,7,.2], ketjap:[280,1.5,68,0,{el:15}], witvis:[85,19,0,1], prei:[30,1.6,5,.3,{st:150}],
+  aardappelen:[80,2,17,.1], courgette:[18,1.5,2.5,.3,{st:300}], bloemkool:[25,2,3,.3,{st:600}], krieltjes:[80,2,17,.1],
+  sperziebonen:[30,2,4,.2], couscous:[360,12,72,1.5], tomaten:[20,.9,3,.2,{st:100}], nasigroente:[30,1.5,5,.3],
+  eieren:[140,12.5,.5,10,{st:55}], wraps:[300,8,50,7,{st:45}], ijsbergsla:[14,1,2,.1,{st:500}], 'pizza-m':[240,10,30,9,{st:320}],
+  pannenkoekenmix:[350,10,72,2], melk:[46,3.5,4.7,1.5], stroop:[300,.5,75,0,{el:20}], friet:[170,2.5,25,6],
+  hamburgerbroodjes:[270,9,48,4.5,{st:60}], cheddar:[400,25,0,33,{plak:20}], kipshoarma:[160,20,2,8], komkommer:[12,.7,2,.1,{st:400}],
+  knoflooksaus:[400,1,8,40], tortillachips:[490,7,60,24], macaroni:[355,12,71,1.5], spekjes:[300,15,0,27],
+  paneermeel:[370,12,72,3], lasagnebladen:[355,12,71,1.5]
+};
+function macros(r){
+  const t=[0,0,0,0]; let ok=true;
+  for(const [id,,amt,unit] of r.ing){
+    const n=NUTRI[id]; if(!n){ ok=false; continue; }
+    const g = (unit==='g'||unit==='ml') ? amt : amt*((n[4]||{})[unit]||0);
+    if(!g){ ok=false; continue; }
+    for(let i=0;i<4;i++) t[i]+=n[i]*g/100;
+  }
+  const [kcal,eiwit,kh,vet]=t.map(v=>v/4);   // recepten zijn voor 4 porties
+  return {kcal:Math.round(kcal/10)*10, eiwit:Math.round(eiwit), kh:Math.round(kh), vet:Math.round(vet), ok};
+}
+function macroHTML(r){
+  const m=macros(r);
+  return `<div class="macros"><div><b>${m.kcal}</b><span>kcal</span></div><div><b>${m.eiwit} g</b><span>eiwit</span></div><div><b>${m.kh} g</b><span>koolhydraten</span></div><div><b>${m.vet} g</b><span>vet</span></div></div>
+    <p class="demo" style="text-align:left;margin-top:4px">Per portie, een schatting op basis van gemiddelde voedingswaarden${m.ok?'':' (niet alle ingrediënten meegeteld)'}. Olie en sauzes die je zelf toevoegt zijn niet meegeteld.</p>`;
+}
+
 /* ---------- receptkaart ---------- */
 function fmtQty(amount, unit, k){
   let v = amount*k;
@@ -267,6 +301,8 @@ function openRecipe(rid){
   sheet(`${ph?`<div class="recipe-hero"><img src="${recipePhoto(rid)}" alt="${esc(r.name)}"><a class="credit" href="${esc(ph.u)}" target="_blank" rel="noopener">Foto: ${esc(ph.a)} · ${esc(ph.l)} · Wikimedia Commons</a></div>`:''}
     <div class="sheet-head"><div class="emoji">${r.emoji}</div><div><h3>${esc(r.name)}</h3><div class="meta">⏱ ${r.time} min · ${persons} personen${r.cheat?' · 🍔 cheatday':''}</div></div></div>
     <div class="tagrow">${r.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+    <h2 style="font-size:16px">Voedingswaarde per portie</h2>
+    ${macroHTML(r)}
     <h2 style="font-size:16px">Ingrediënten</h2>
     <div class="list">${r.ing.map(([id,,amt,unit,label])=>{const p=P(id);return `<div class="item static" style="padding:8px 12px"${p?` data-open="${id}"`:''}>
       <div class="info"><div class="name" style="white-space:normal;font-weight:500"><b>${fmtQty(amt,unit,k)}</b> ${esc(label)}</div></div>
