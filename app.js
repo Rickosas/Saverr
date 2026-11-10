@@ -27,7 +27,7 @@ const MONTHS = ['januari','februari','maart','april','mei','juni','juli','august
 const DAYS = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const REWARDS = [{pts:1000,eur:1},{pts:5000,eur:5},{pts:10000,eur:10}];
 const EARN = [['🏷️','Aanbieding gebruiken (Gekocht)','+10'],['🛒','Boodschappenlijst vergelijken','+20 per week'],
-  ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+10 tot +50'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitnodigen','binnenkort']];
+  ['🤖','Weekmenu laten maken','+20 per week'],['🎯','Challenges voltooien','+10 tot +50'],['📅','Elke week actief zijn','+50 per week'],['👋','Vrienden uitdagen','in de ranglijst']];
 
 /* ================= opslag op je telefoon ================= */
 const KEY = 'saverr_beta_v1';
@@ -393,8 +393,8 @@ function installBanner(){
 
 function viewMore(){
   const tiles=[['challenges','🎯','Challenges',`${challenges().filter(c=>!c.claimed).length} actief`],['rewards','🎁','Punten',`⚡${st.points}`],
-    ['stores','📍','Mijn winkels',st.myStores.map(id=>S(id).name).join(', ')||'Kies je winkels'],['settings','⚙️','Instellingen','Meldingen, gegevens']];
-  const soon=[['🏆','Ranglijst met vrienden'],['🧾','Bonnetje scannen'],['💡','Wat kan ik besparen?']];
+    ['friends','🏆','Ranglijst',(()=>{const n=Object.keys(st.friends||{}).length;return n?n+(n===1?' vriend':' vrienden'):'Daag vrienden uit';})()],['stores','📍','Mijn winkels',st.myStores.map(id=>S(id).name).join(', ')||'Kies je winkels'],['settings','⚙️','Instellingen','Meldingen, gegevens']];
+  const soon=[['🧾','Bonnetje scannen'],['💡','Wat kan ik besparen?']];
   return `${installBanner()}<div class="profile"><div class="avatar">🧑</div><div style="flex:1"><b style="font-size:16px">Jouw Saverr</b>
       <div class="meta">Gebruiker sinds ${fmtDate(st.since)} · 🔥 ${streak()} weken streak</div></div>
       <div style="text-align:right"><b style="font-family:'Bricolage Grotesque';font-size:20px;color:#5b3fd1">⚡${st.points}</b><div class="meta">punten</div></div></div>
@@ -445,7 +445,7 @@ function viewSettings(){
 /* ================= render ================= */
 function render(){
   if(!META) return;
-  const v = sub ? {challenges:viewChallenges,rewards:viewRewards,stores:viewStores,settings:viewSettings,planner:viewPlanner,week:viewWeek}[sub]
+  const v = sub ? {challenges:viewChallenges,rewards:viewRewards,friends:viewFriends,stores:viewStores,settings:viewSettings,planner:viewPlanner,week:viewWeek}[sub]
                 : {home:viewHome,browse:viewBrowse,favs:viewFavs,list:viewList,alerts:viewAlerts,more:viewMore}[tab];
   $('#main').innerHTML = v();
   $('#searchWrap').style.display = (!sub&&(tab==='browse'||tab==='favs'))?'flex':'none';
@@ -538,6 +538,8 @@ document.addEventListener('click', e=>{
   if(x=el('[data-cfav]')){ e.stopPropagation(); const [s,...l]=x.dataset.cfav.split('|'); toggleCFav(s,l.join('|')); $('#sheet').classList.contains('show')?openRow(s,l.join('|')):render(); return; }
   if(x=el('[data-buy]')){ const o=JSON.parse(x.dataset.buy); markBought(o); o.key.includes('c:')||!P(o.key.split('|')[0])?openRow(o.sid,o.key.split('|').slice(1,-1).join('|')):openProduct(o.key.split('|')[0]); return; }
   if(x=el('nav button')){ go(x.dataset.tab); return; }
+  if(x=el('[data-fmode]')){ friendMode=x.dataset.fmode; render(); return; }
+  if(x=el('[data-unfriend]')){ if(x.dataset.sure){ delete st.friends[x.dataset.unfriend]; save(); render(); } else { x.dataset.sure='1'; x.textContent='zeker?'; x.style.color='var(--deal)'; } return; }
   if(x=el('[data-go]')){ go('more',x.dataset.go); return; }
   if(x=el('[data-sub]')){ sub=x.dataset.sub; render(); $('#main').scrollTop=0; return; }
   if(x=el('[data-pstep]')){ const [k,d,mn,mx]=x.dataset.pstep.split('|'); planForm[k]=Math.min(+mx,Math.max(+mn,planForm[k]+ +d)); render(); return; }
@@ -564,6 +566,8 @@ document.addEventListener('click', e=>{
     else if(a==='share') shareWeek();
     else if(a==='notifoff'){ st.notif=false; save(); render(); }
     else if(a==='pickstore'){ openStorePicker(); }
+    else if(a==='sharestand'){ shareStanding(); }
+    else if(a==='savename'){ const v=($('#myName').value||'').trim().slice(0,24); if(v){ me().name=v; save(); render(); } }
     else if(a==='lidlplus'){ st.lidlPlus = st.lidlPlus===false; save(); buildAlerts(); render(); }
     else if(a==='install' && deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{ deferredInstall=null; render(); }); }
     else if(a==='reset'){ if(x.dataset.sure){ localStorage.removeItem(KEY); location.reload(); } else { x.dataset.sure='1'; x.textContent='Zeker weten? Tik nogmaals om alles te wissen'; x.style.color='var(--deal)'; } }
@@ -581,6 +585,54 @@ let qT; $('#q').addEventListener('input', e=>{ query=e.target.value.trim().toLow
 window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredInstall=e; render(); });
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') refresh(); });
 
+
+/* ================= ranglijst met vrienden =================
+   Zonder server: je deelt je stand als link via WhatsApp. Opent een vriend die link,
+   dan kom jij in zijn/haar ranglijst (en andersom). Elke keer delen werkt de stand bij. */
+const AVATARS=['🦊','🐼','🐸','🦁','🐨','🐯','🐙','🦄','🐧','🐻'];
+function me(){ if(!st.me||!st.me.id){ st.me={id:Math.random().toString(36).slice(2,10), name:'', av:AVATARS[Math.floor(Math.random()*AVATARS.length)]}; save(); } return st.me; }
+const b64e = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
+function myCard(){ const m=me(); return {i:m.id, n:m.name||'Saverr-vriend', a:m.av, w:WEEK, ws:Math.round(sumSaved(buysWeek())*100)/100, t:Math.round(sumSaved(st.purchases)*100)/100, k:streak(), u:new Date().toISOString().slice(0,10)}; }
+function friendLink(){ return location.origin+location.pathname.replace(/index\.html$/,'')+'#vriend='+b64e(myCard()); }
+async function shareStanding(){
+  const c=myCard(), url=friendLink();
+  const text=`🏆 Saverr-ranglijst: ik bespaarde deze week ${euro(c.ws)} op mijn boodschappen (totaal ${euro(c.t)}). Doe je mee? Open de link, dan staan we in elkaars ranglijst 👇`;
+  try{ if(navigator.share){ await navigator.share({text,url}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  location.href='https://wa.me/?text='+encodeURIComponent(text+'\n'+url);
+}
+function readFriendHash(){
+  const m=location.hash.match(/^#vriend=([\w-]+)/); if(!m) return false;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{
+    const f=b64d(m[1]); if(!f||!f.i||f.i===me().id) return false;
+    st.friends=st.friends||{}; const isNew=!st.friends[f.i];
+    st.friends[f.i]={n:String(f.n||'Vriend').slice(0,24), a:f.a||'🙂', w:f.w, ws:+f.ws||0, t:+f.t||0, k:+f.k||0, u:f.u};
+    save(); tab='more'; sub='friends';
+    setTimeout(()=>push(isNew?`🎉 ${st.friends[f.i].n} staat nu in je ranglijst! Deel jouw stand terug, dan sta jij ook in die van hem/haar.`:`🔄 De stand van ${st.friends[f.i].n} is bijgewerkt.`),600);
+    return true;
+  }catch(e){ return false; }
+}
+function viewFriends(){
+  const m=me(), mine=myCard(), weekMode=(friendMode!=='total');
+  const rows=[{...mine,me:true,n:m.name||'Jij'}, ...Object.entries(st.friends||{}).map(([i,f])=>({i,...f}))]
+    .map(r=>({...r, score: weekMode ? (r.me||r.w===WEEK ? r.ws : 0) : r.t, old: !r.me && weekMode && r.w!==WEEK}))
+    .sort((a,b)=>b.score-a.score);
+  const medal=i=>['🥇','🥈','🥉'][i]||`<span style="display:inline-block;width:22px;text-align:center;color:var(--muted);font-weight:600">${i+1}</span>`;
+  const n=Object.keys(st.friends||{}).length;
+  return `${backBtn}<h2>🏆 Ranglijst met vrienden</h2>
+    ${m.name?'':`<div class="card" style="padding:12px;margin-bottom:12px"><b>Hoe mogen je vrienden je noemen?</b>
+      <div style="display:flex;gap:8px;margin-top:8px"><input id="myName" maxlength="24" placeholder="Je voornaam" style="flex:1;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"><button class="btn sm green" data-act="savename">Opslaan</button></div></div>`}
+    <div class="chips"><button class="chip ${weekMode?'on':''}" data-fmode="week">Deze week</button><button class="chip ${weekMode?'':'on'}" data-fmode="total">Totaal bespaard</button></div>
+    <div class="list">${rows.map((r,i)=>`<div class="item static" style="${r.me?'background:#eefaf3':''}"><div style="font-size:20px;width:28px;text-align:center">${medal(i)}</div>
+      <div class="emoji" style="font-size:22px">${esc(r.a||'🙂')}</div>
+      <div class="info"><div class="name">${esc(r.n)}${r.me?' (jij)':''}</div><div class="meta">${r.me?`🔥 ${r.k} weken streak`:r.old?`nog geen stand van deze week · bijgewerkt ${fmtDate(r.u)}`:`bijgewerkt ${fmtDate(r.u)}`}</div></div>
+      <div class="price"><b style="color:var(--green)">${euro(r.score)}</b>${r.me?'':`<button data-unfriend="${esc(r.i)}" title="Verwijderen" style="display:block;margin:2px 0 0 auto;border:0;background:none;color:var(--muted);font-size:11px;cursor:pointer">verwijderen</button>`}</div></div>`).join('')}</div>
+    <button class="btn green" data-act="sharestand" style="width:100%;margin-top:14px">📲 ${n?'Deel mijn stand':'Nodig vrienden uit'} via WhatsApp</button>
+    ${n?'':'<p class="hint" style="margin-top:10px">Nog geen vrienden in je ranglijst. Stuur je link naar vrienden: zodra zij hem openen, staan jullie bij elkaar in de lijst.</p>'}
+    <p class="demo" style="margin-top:12px;text-align:left">Zo werkt het in de beta: jouw stand gaat mee in de link die je deelt. Wil je dat vrienden je nieuwe stand zien, deel dan opnieuw (bijvoorbeeld elke zondag). Een ranglijst die vanzelf bijwerkt komt later, als Saverr accounts heeft.</p>`;
+}
+let friendMode='week';
 /* ================= start ================= */
 async function refresh(){
   try{ const old=META&&META.built; await loadData(); if(old && old===META.built) return; buildAlerts(); render(); notifyNew();
@@ -589,4 +641,6 @@ async function refresh(){
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 if(location.hash==='#alerts') tab='alerts';
+readFriendHash();
+window.addEventListener('hashchange', ()=>{ if(readFriendHash()) render(); });
 refresh();
