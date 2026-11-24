@@ -258,7 +258,7 @@ function viewHome(){
   const mine = liveDrops().filter(r=>st.myStores.includes(rowStore(r,DROPS_SRC))).slice(0,5);
   return `${installBanner()}
     <p class="hello">${['Goedenacht','Goedemorgen','Goedemiddag','Goedenavond'][Math.floor(today.getHours()/6)]}! Zo staat je spaarpot ervoor 👇</p>
-    <button class="aicta" data-sub="planner"><span class="i">🤖</span><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je gezonde weekmenu':'Gezond weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
+    <button class="aicta" data-sub="planner"><span style="flex:1;text-align:left"><b>Help mij besparen</b><small>${st.plan?'Bekijk je gezonde weekmenu':'Gezond weekmenu binnen je budget'}</small></span><span style="font-size:20px">›</span></button>
     <div class="hero" data-sub="week" style="cursor:pointer"><div class="lbl">Deze week bespaard</div><div class="amt">${euro(ws)}</div>
       <span class="trend">${buysWeek().length} prijsdalingen gebruikt · weekoverzicht ›</span>
       <div class="bars">${hist.map(h=>`<div class="${h.cur?'cur':''}"><i style="height:${Math.max(4,h.v/max*48)}px"></i><span>wk ${h.w}</span></div>`).join('')}</div></div>
@@ -270,7 +270,7 @@ function viewHome(){
     ${!st.purchases.length?`<div class="tip"><span class="i">💡</span><div>Zie je een prijsdaling en koop je hem? Tik op <b>Gekocht</b>, dan houdt Saverr bij hoeveel je bespaart.</div></div>`:''}
     ${dd?(()=>{const sid=rowStore(dd,DROPS_SRC); return `<h2>Deal van de dag</h2>
     <div class="dotd"><div class="badge">-${pct(rowNow(dd),rowWas(dd))}%</div>
-      <div class="k">🔥 DEAL VAN DE DAG</div><div class="d">${DAYS[today.getDay()]} ${today.getDate()} ${MONTHS[today.getMonth()]}</div>
+      <div class="d" style="text-transform:capitalize">${DAYS[today.getDay()]} ${today.getDate()} ${MONTHS[today.getMonth()]}</div>
       <div class="body">${pic(rowImg(dd,DROPS_SRC),'🛍️')}<div><div class="pn">${esc(dd[1])}</div>
         <div class="pp"><s>${euro(rowWas(dd))}</s> → <b>${euro(rowNow(dd))}</b></div>
         <div style="font-size:13px;margin-top:2px">${S(sid).name}${rowPromo(dd)?' · '+esc(rowPromo(dd)[0])+untilTxt(rowPromo(dd)[3]):dd[3]?' · '+esc(dd[3]):''}</div></div></div>
@@ -290,11 +290,11 @@ function viewHome(){
 }
 
 function viewBrowse(){
-  const seg=`<div class="seg"><button class="${bmode==='cmp'?'on':''}" data-bmode="cmp">⚖️ Vergeleken</button><button class="${bmode==='drops'?'on':''}" data-bmode="drops">🔥 Aanbiedingen</button><button class="${bmode==='all'?'on':''}" data-bmode="all">🗂️ Alles</button></div>`;
+  const seg=`<div class="seg"><button class="${bmode==='cmp'?'on':''}" data-bmode="cmp">Vergeleken</button><button class="${bmode==='drops'?'on':''}" data-bmode="drops">Aanbiedingen</button><button class="${bmode==='all'?'on':''}" data-bmode="all">Alles</button></div>`;
   if(bmode==='all') return seg+viewCatalog();
   if(bmode==='drops'){
     const one = dropFilter!=='mine' && dropFilter!=='all' ? dropFilter : null;
-    const chips=`<div class="chips"><button class="chip ${one?'on':''}" data-act="pickstore">${one?`<span class="dotc" style="background:${S(one).color};display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:1px"></span>${S(one).name}`:'🏪 Kies supermarkt'} ▾</button><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">📍 Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>`;
+    const chips=`<div class="chips"><button class="chip ${one?'on':''}" data-act="pickstore">${one?`<span class="dotc" style="background:${S(one).color};display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:1px"></span>${S(one).name}`:'Kies supermarkt'} ▾</button><button class="chip ${dropFilter==='mine'?'on':''}" data-dropf="mine">Mijn winkels</button><button class="chip ${dropFilter==='all'?'on':''}" data-dropf="all">Alle supermarkten</button></div>`;
     if(one){
       if(!catalog){ loadCatalog(); return seg+chips+`<div class="empty"><div class="big">⏳</div>Aanbiedingen van ${S(one).name} laden…</div>`; }
       const rows=storeOffers(one).filter(r=>!query||r[8].includes(query));
@@ -323,7 +323,7 @@ function openStorePicker(){
   loadCatalog();
   const n = sid => catalog && !catalog.error ? storeOffers(sid).length : null;
   const list=STORES.map(s=>({s,c:n(s.id)})).sort((a,b)=>(b.c??0)-(a.c??0));
-  sheet(`<h3 data-picker style="margin:4px 0 10px">🏪 Kies een supermarkt</h3><p class="hint">Bekijk alle aanbiedingen van één winkel.</p>
+  sheet(`<h3 data-picker style="margin:4px 0 10px">Kies een supermarkt</h3><p class="hint">Bekijk alle aanbiedingen van één winkel.</p>
     <div class="list">${list.map(({s,c})=>`<div class="item" data-dropf="${s.id}" style="cursor:pointer"><span class="dotc" style="background:${s.color};width:14px;height:14px;border-radius:50%;display:inline-block;flex:none"></span>
       <div class="info"><div class="name">${s.name}</div><div class="meta">${c==null?'aanbiedingen tellen…':c?c+' aanbiedingen':'geen aanbiedingen gevonden'}${st.myStores.includes(s.id)?' · 📍 jouw winkel':''}</div></div><div class="price" style="color:var(--green);font-weight:600">›</div></div>`).join('')}</div>`);
   if(!catalog) setTimeout(()=>{ if($('#sheet').classList.contains('show') && $('#sheet [data-picker]')) openStorePicker(); }, 700);
@@ -412,9 +412,9 @@ function viewChallenges(){ return `${backBtn}<h2>Challenges · week ${weekNr}</h
 function viewRewards(){
   const next=REWARDS.find(r=>r.pts>st.points)||REWARDS[2];
   return `${backBtn}<h2>Punten & beloningen</h2>
-    <div class="hero" style="background:linear-gradient(135deg,#5b3fd1,#3a2596)"><div class="lbl">Jouw punten</div><div class="amt">⚡ ${st.points.toLocaleString('nl-NL')}</div>
+    <div class="hero"><div class="lbl">Jouw punten</div><div class="amt">⚡ ${st.points.toLocaleString('nl-NL')}</div>
       ${st.points<next.pts?`<div class="prog" style="margin-top:12px;background:rgba(255,255,255,.2)"><i style="width:${st.points/next.pts*100}%;background:#c9bcff"></i></div><div style="font-size:12px;opacity:.85;margin-top:5px">Nog ${next.pts-st.points} punten tot ${euro(next.eur)}</div>`:''}</div>
-    <h2>Inwisselen <span class="soon">BINNENKORT</span></h2>
+    <h2>Inwisselen <span class="soon">binnenkort</span></h2>
     <p class="hint">In de beta spaar je al punten. Inwisselen voor cadeaubonnen komt in een volgende versie.</p>
     ${REWARDS.map(rw=>`<div class="row"><div class="logo-sq" style="background:#5b3fd1;font-size:13px">€${rw.eur}</div><div class="st">${euro(rw.eur)} cadeaubon<em>${rw.pts.toLocaleString('nl-NL')} punten</em></div><span class="soon">${st.points>=rw.pts?'✓ genoeg':'🔒'}</span></div>`).join('')}
     <h2>Zo verdien je punten</h2><div class="list">${EARN.map(e=>`<div class="item static"><div class="emoji">${e[0]}</div><div class="info"><div class="name" style="white-space:normal">${e[1]}</div></div><div class="price"><b style="font-size:13px;color:#5b3fd1">${e[2]}</b></div></div>`).join('')}</div>
@@ -620,7 +620,7 @@ function viewFriends(){
     .sort((a,b)=>b.score-a.score);
   const medal=i=>['🥇','🥈','🥉'][i]||`<span style="display:inline-block;width:22px;text-align:center;color:var(--muted);font-weight:600">${i+1}</span>`;
   const n=Object.keys(st.friends||{}).length;
-  return `${backBtn}<h2>🏆 Ranglijst met vrienden</h2>
+  return `${backBtn}<h2>Ranglijst met vrienden</h2>
     ${m.name?'':`<div class="card" style="padding:12px;margin-bottom:12px"><b>Hoe mogen je vrienden je noemen?</b>
       <div style="display:flex;gap:8px;margin-top:8px"><input id="myName" maxlength="24" placeholder="Je voornaam" style="flex:1;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit"><button class="btn sm green" data-act="savename">Opslaan</button></div></div>`}
     <div class="chips"><button class="chip ${weekMode?'on':''}" data-fmode="week">Deze week</button><button class="chip ${weekMode?'':'on'}" data-fmode="total">Totaal bespaard</button></div>
@@ -633,6 +633,21 @@ function viewFriends(){
     <p class="demo" style="margin-top:12px;text-align:left">Zo werkt het in de beta: jouw stand gaat mee in de link die je deelt. Wil je dat vrienden je nieuwe stand zien, deel dan opnieuw (bijvoorbeeld elke zondag). Een ranglijst die vanzelf bijwerkt komt later, als Saverr accounts heeft.</p>`;
 }
 let friendMode='week';
+
+/* ---------- schapkaartjes: elke prijs wordt een prijskaartje (euro groot, centen klein) ---------- */
+function labelize(root){
+  root.querySelectorAll('.price>b, .row .pr, .cmp .v, .dotd .pp b').forEach(el=>{
+    if(el.dataset.pt) return;
+    const t=el.childNodes[0]; if(!t||t.nodeType!==3) return;
+    const m=t.textContent.trim().match(/^€\s?(\d+),(\d{2})$/); if(!m) return;
+    const span=document.createElement('span'); span.className='pt'; span.innerHTML=`<span class="pe">${m[1]}</span><span class="pc">${m[2]}</span>`;
+    span.setAttribute('aria-label',`€${m[1]},${m[2]}`);
+    t.replaceWith(span); el.dataset.pt=1;
+    const box=el.classList.contains('pr')?el:el.parentElement;
+    if(box && box.querySelector('s')) box.classList.add('deal');
+  });
+}
+new MutationObserver(()=>{ labelize($('#main')); labelize($('#sheet')); }).observe(document.body,{childList:true,subtree:true});
 /* ================= start ================= */
 async function refresh(){
   try{ const old=META&&META.built; await loadData(); if(old && old===META.built) return; buildAlerts(); render(); notifyNew();

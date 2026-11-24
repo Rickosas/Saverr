@@ -1,6 +1,6 @@
 // Saverr service worker: laat de app offline openen en houdt de prijsdata vers.
-const VERSION = 'saverr-v15';
-const SHELL = ['./', 'index.html', 'app.js', 'planner.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png'];
+const VERSION = 'saverr-v16';
+const SHELL = ['./', 'index.html', 'app.js', 'planner.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/archivo.woff'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

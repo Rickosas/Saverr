@@ -209,15 +209,15 @@ function viewPlanner(){
   const step = (k,min,max,stepv,fmt) => `<div class="row"><div class="st">${{persons:'Aantal personen',budget:'Budget',days:'Aantal avonden'}[k]}</div>
     <button class="btn sm ghost" data-pstep="${k}|${-stepv}|${min}|${max}">−</button><b style="min-width:56px;text-align:center;font-family:'Bricolage Grotesque';font-size:17px">${fmt(f[k])}</b><button class="btn sm ghost" data-pstep="${k}|${stepv}|${min}|${max}">+</button></div>`;
   return `<button class="back" data-act="back">‹ Terug</button>
-    <h2>🤖 Help mij besparen</h2>
+    <h2>Help mij besparen</h2>
     <p class="hint">Saverr maakt een <b>gezond weekmenu</b> (groente met vlees of vis, volkoren waar het kan) binnen je budget, met de prijzen en aanbiedingen van vandaag. Tik op een gerecht voor het recept.</p>
     ${step('persons',1,8,1,v=>v)}
     ${step('budget',15,250,5,v=>'€'+v)}
     ${step('days',2,7,1,v=>v)}
     <div class="row"><div class="st">🍔 Cheatday-maaltijd<em>Eén extra avond zonder schuldgevoel</em></div>
       <button class="switch ${f.cheat?'on':''}" data-act="cheat" aria-label="Cheatday"></button></div>
-    <div class="chips" style="margin-top:6px"><button class="chip ${!f.allStores?'on':''}" data-pall="0">📍 Mijn winkels</button><button class="chip ${f.allStores?'on':''}" data-pall="1">Alle supermarkten</button></div>
-    <button class="btn green" data-act="mkplan">${plan?'🔄 Maak een nieuw weekmenu':'✨ Maak mijn weekmenu'}</button>
+    <div class="chips" style="margin-top:6px"><button class="chip ${!f.allStores?'on':''}" data-pall="0">Mijn winkels</button><button class="chip ${f.allStores?'on':''}" data-pall="1">Alle supermarkten</button></div>
+    <button class="btn green" data-act="mkplan">${plan?'Maak een nieuw weekmenu':'Maak mijn weekmenu'}</button>
     ${plan?planHTML(plan,start):''}`;
 }
 const dayLabel = d => { const t=new Date(); t.setHours(0,0,0,0); const x=new Date(d); x.setHours(0,0,0,0); const diff=Math.round((x-t)/864e5);
@@ -226,11 +226,11 @@ const dayLabel = d => { const t=new Date(); t.setHours(0,0,0,0); const x=new Dat
 const past = d => { const t=new Date(); t.setHours(0,0,0,0); const x=new Date(d); x.setHours(0,0,0,0); return x<t; };
 function planHTML(c,start){
   const p=st.plan, over=c.total>p.budget+0.005;
-  return `<h2>🍝 Jouw weekmenu</h2>
+  return `<h2>Jouw weekmenu</h2>
     <p class="hint">${p.persons} personen · ${p.ids.length} avonden${p.cheat?' (incl. 🍔 cheatday)':''} · alles bij <b>${S(c.sid).name}</b>${c.missing?` · ${c.missing} product(en) daar niet gevonden (geschat)`:''}</p>
     <div class="list">${c.meals.map((m,i)=>{const d=new Date(start); d.setDate(d.getDate()+i); return `<div class="item static">
       <div data-recipe="${m.r.id}" style="cursor:pointer">${pic(recipePhoto(m.r.id),m.r.emoji)}</div><div class="info" data-recipe="${m.r.id}" style="cursor:pointer"><div class="meta" style="font-weight:600;color:${past(d)?'var(--muted)':m.r.cheat?'var(--deal)':'var(--green)'}">${dayLabel(d)}${past(d)?' · geweest':''}${m.r.cheat?' · 🍔 Cheatday!':''}</div><div class="name" style="white-space:normal">${m.r.name}</div><div class="meta">⏱ ${m.r.time} min · ${macros(m.r).kcal} kcal · ${macros(m.r).eiwit} g eiwit · <span style="color:var(--green);font-weight:600">recept ›</span></div></div>
-      <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)">🔄</button></div>`}).join('')}</div>
+      <div class="price"><b>${euro(m.cost)}</b></div><button class="fav sm" data-swap="${i}" title="Ander gerecht" aria-label="Ander gerecht" style="color:var(--green)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 4v4h-4M20 15a8 8 0 0 1-14 3l-2-2M4 20v-4h4"/></svg></button></div>`}).join('')}</div>
     <div class="savebig" style="margin-top:12px">
       <div class="brk" style="margin-top:0"><div><span>Zonder slim kiezen<br><small style="opacity:.8">${S(c.refSid).name}, zonder aanbiedingen</small></span><b><s style="opacity:.7">${euro(c.ref)}</s></b></div>
         <div><span>Bij ${S(c.sid).name}, mét ${c.drops} aanbieding${c.drops===1?'':'en'}</span><b>${euro(c.total)}</b></div></div>
@@ -249,7 +249,7 @@ function doPlan(swapIndex=null){
   const c = swapIndex==null ? makePlan(f) : makePlan({...f,persons:st.plan.persons,budget:st.plan.budget,days:st.plan.ids.length,allStores:st.plan.allStores}, {ids:st.plan.ids, swap:swapIndex, sid:st.plan.sid});
   if(!c) return push('Er kon geen weekmenu gemaakt worden.');
   st.plan={ids:c.ids,sid:c.sid,persons:swapIndex==null?f.persons:st.plan.persons,budget:swapIndex==null?f.budget:st.plan.budget,allStores:swapIndex==null?f.allStores:st.plan.allStores,cheat:swapIndex==null?f.cheat:st.plan.cheat,created:swapIndex==null?Date.now():st.plan.created};
-  if(swapIndex==null && st.planPts!==WEEK){ st.planPts=WEEK; addPoints(20,'Weekmenu gemaakt'); push(`✨ Weekmenu klaar: ${euro(c.saved)} bespaard! +20 punten.`); }
+  if(swapIndex==null && st.planPts!==WEEK){ st.planPts=WEEK; addPoints(20,'Weekmenu gemaakt'); push(`Weekmenu klaar: ${euro(c.saved)} bespaard! +20 punten.`); }
   save(); render();
 }
 
@@ -331,8 +331,8 @@ function weekStats(w=WEEK){
 function viewWeek(){
   const s=weekStats(), d=new Date(), mon=new Date(d); mon.setDate(d.getDate()-((d.getDay()+6)%7)); const sun=new Date(mon); sun.setDate(mon.getDate()+6);
   return `<button class="back" data-act="back">‹ Terug</button>
-    <h2>📊 Jouw week ${s.w}</h2><p class="hint">${mon.getDate()} ${MONTHS[mon.getMonth()]} t/m ${sun.getDate()} ${MONTHS[sun.getMonth()]}</p>
-    <div class="hero"><div class="lbl">💰 Deze week</div><div class="amt">${euro(s.saved)}</div><span class="trend">bespaard${s.prev?` · vorige week ${euro(s.prev)}`:''}</span></div>
+    <h2>Jouw week ${s.w}</h2><p class="hint">${mon.getDate()} ${MONTHS[mon.getMonth()]} t/m ${sun.getDate()} ${MONTHS[sun.getMonth()]}</p>
+    <div class="hero"><div class="lbl">Deze week</div><div class="amt">${euro(s.saved)}</div><span class="trend">bespaard${s.prev?` · vorige week ${euro(s.prev)}`:''}</span></div>
     <div class="stats">
       <div class="stat"><span class="ico">🛒</span><b>${s.deals}</b><span>aanbiedingen gebruikt</span></div>
       <div class="stat"><span class="ico">⭐</span><b>+${s.pts}</b><span>punten verdiend</span></div>
